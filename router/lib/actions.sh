@@ -11,9 +11,7 @@ apply_client_rate_limits() {
         [ "$(( ${_dl:-0} / 8 ))" -gt 0 ] || [ "$(( ${_ul:-0} / 8 ))" -gt 0 ] && _rules=$((_rules + 1))
     done < "$_cfg"
     if [ "$_rules" -gt 0 ]; then
-        nft 'add table inet archer_rate' 2>/dev/null
-        nft 'add chain inet archer_rate forward { type filter hook forward priority -5; policy accept; }' 2>/dev/null
-        nft 'flush chain inet archer_rate forward' 2>/dev/null
+        nft 'add table inet archer_rate' 2>/dev/null; nft 'add chain inet archer_rate forward { type filter hook forward priority -5; policy accept; }' 2>/dev/null; nft 'flush chain inet archer_rate forward' 2>/dev/null
         while IFS='|' read -r _m _name _dl _ul || [ -n "$_m" ]; do
             _dl_k=$(( ${_dl:-0} / 8 )); _ul_k=$(( ${_ul:-0} / 8 ))
             [ "$_dl_k" -gt 0 ] && nft "add rule inet archer_rate forward ether daddr $_m limit rate over ${_dl_k} kbytes/second drop" 2>/dev/null
@@ -28,44 +26,48 @@ execute_control() {
     check_auth "$_payload"
 
     _cmd=$(extract_param "command" "$_payload"); [ -z "$_cmd" ] && _cmd=$(extract_param "cmd" "$_payload")
-    _target=$(extract_param "target" "$_payload")
-    _val=$(extract_param "value" "$_payload"); [ -z "$_val" ] && _val=$(extract_param "val" "$_payload")
+    _target=$(extract_param "target" "$_payload"); [ -z "$_target" ] && _target=$(extract_param "mac" "$_payload")
+    _val=$(extract_param "value" "$_payload"); [ -z "$_val" ] && _val=$(extract_param "val" "$_payload"); [ -z "$_val" ] && _val=$(extract_param "minutes" "$_payload")
     _status="success"; _msg=""
 
     case "$_cmd" in
         "reboot")
-            _msg="Router is rebooting now..."
-            ( sleep 1; reboot ) >/dev/null 2>&1 & ;;
+            _msg="Router is rebooting now..."; ( sleep 1; reboot ) >/dev/null 2>&1 & ;;
         "wifi_toggle")
-            _radio="${_target:-radio0}"; _state="${_val:-toggle}"
-            [ "$_state" = "off" ] && uci set wireless."$_radio".disabled='1' || uci set wireless."$_radio".disabled='0'
-            uci commit wireless && wifi reload >/dev/null 2>&1 &
-            _msg="WiFi $_radio state updated to $_state" ;;
+            _radio="${_target:-radio0}"; _state="${_val:-toggle}"; [ "$_state" = "off" ] && uci set wireless."$_radio".disabled='1' || uci set wireless."$_radio".disabled='0'
+            uci commit wireless && wifi reload >/dev/null 2>&1 & _msg="WiFi $_radio state updated to $_state" ;;
         "led_stealth")
-            _b="$([ "$_val" = "on" ] && echo 1 || echo 0)"
-            for _l in /sys/class/leds/*; do [ -d "$_l" ] && echo "$_b" > "$_l/brightness" 2>/dev/null; done
-            _msg="LED stealth mode set to ${_val:-off}" ;;
+            _b="$([ "$_val" = "on" ] && echo 1 || echo 0)"; for _l in /sys/class/leds/*; do [ -d "$_l" ] && echo "$_b" > "$_l/brightness" 2>/dev/null; done; _msg="LED stealth mode set to ${_val:-off}" ;;
         "block_client"|"unblock_client")
             if [ -n "$_target" ]; then
                 case "$_target" in
                     [0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F])
-                        _sec="blk_$(echo "$_target" | tr -d ':')"
+                        _sec="blk_$(echo "$_target" | tr -d ':')"; _tm=$(echo "$_target" | tr '[:upper:]' '[:lower:]'); _bf="/etc/archer_guard_blocked.conf"; touch "$_bf"
                         if [ "$_cmd" = "block_client" ]; then
-                            uci set firewall."$_sec"=rule; uci set firewall."$_sec".name="block_$_sec"
-                            uci set firewall."$_sec".src="lan"; uci set firewall."$_sec".dest="*"; uci set firewall."$_sec".src_mac="$_target"; uci set firewall."$_sec".target="DROP"
-                        else uci delete firewall."$_sec" 2>/dev/null; fi
+                            uci set firewall."$_sec"=rule; uci set firewall."$_sec".name="block_$_sec"; uci set firewall."$_sec".src="lan"; uci set firewall."$_sec".dest="wan"; uci set firewall."$_sec".src_mac="$_target"; uci set firewall."$_sec".target="DROP"
+                            grep -qi "^$_tm$" "$_bf" 2>/dev/null || echo "$_tm" >> "$_bf"; command -v ndsctl >/dev/null 2>&1 && { ndsctl deauth "$_target" >/dev/null 2>&1; ndsctl block "$_target" >/dev/null 2>&1; }
+                            for _h in /var/run/hostapd-phy* /var/run/hostapd/wlan* /var/run/hostapd/phy*; do [ -e "$_h" ] && hostapd_cli -p "$_h" deauthenticate "$_target" 2>/dev/null; done; if command -v ubus >/dev/null 2>&1; then for _if in $(ubus list hostapd.* 2>/dev/null); do ubus call "$_if" del_client "{\"addr\":\"$_target\",\"reason\":1,\"deauth\":true}" 2>/dev/null; done; fi
+                            command -v conntrack >/dev/null 2>&1 && conntrack -D -s "$_target" 2>/dev/null; echo f > /proc/net/nf_conntrack 2>/dev/null || true
+                        else
+                            uci delete firewall."$_sec" 2>/dev/null; sed -i "/^$_tm$/d" "$_bf" 2>/dev/null; command -v ndsctl >/dev/null 2>&1 && ndsctl unblock "$_target" >/dev/null 2>&1
+                        fi
                         uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1 &
-                        _op="$([ "$_cmd" = "block_client" ] && echo "-I FORWARD 1" || echo "-D FORWARD")"
-                        iptables $_op -m mac --mac-source "$_target" -j DROP 2>/dev/null
-                        _msg="Client $_target $([ "$_cmd" = "block_client" ] && echo 'blocked' || echo 'unblocked')" ;;
+                        if command -v nft >/dev/null 2>&1; then nft 'add table inet archer_block' 2>/dev/null; nft 'add chain inet archer_block forward { type filter hook forward priority -10; policy accept; }' 2>/dev/null; nft 'flush chain inet archer_block forward' 2>/dev/null; while read -r _bm || [ -n "$_bm" ]; do [ -n "$_bm" ] && nft "add rule inet archer_block forward ether saddr $_bm drop" 2>/dev/null; done < "$_bf"; fi
+                        _op="$([ "$_cmd" = "block_client" ] && echo "-I FORWARD 1" || echo "-D FORWARD")"; iptables $_op -m mac --mac-source "$_target" -j DROP 2>/dev/null; _msg="Client $_target $([ "$_cmd" = "block_client" ] && echo 'blocked' || echo 'unblocked')" ;;
                     *) _status="error"; _msg="Invalid target MAC address format" ;;
                 esac
             else _status="error"; _msg="Target MAC required"; fi ;;
         "nds_auth"|"nds_deauth"|"deauth")
             if command -v ndsctl >/dev/null 2>&1 && [ -n "$_target" ]; then
-                [ "$_cmd" = "nds_auth" ] && ndsctl auth "$_target" "${_val:-60}" >/dev/null 2>&1 || ndsctl deauth "$_target" >/dev/null 2>&1
+                [ "$_cmd" = "nds_auth" ] && ndsctl auth "$_target" "${_val:-120}" >/dev/null 2>&1 || ndsctl deauth "$_target" >/dev/null 2>&1
                 _msg="openNDS $_cmd executed for $_target"
             else _status="error"; _msg="openNDS not active or invalid MAC"; fi ;;
+        "kick_client"|"disconnect_client")
+            if [ -n "$_target" ]; then
+                for _h in /var/run/hostapd-phy* /var/run/hostapd/wlan* /var/run/hostapd/phy*; do [ -e "$_h" ] && hostapd_cli -p "$_h" deauthenticate "$_target" 2>/dev/null; done
+                if command -v ubus >/dev/null 2>&1; then for _if in $(ubus list hostapd.* 2>/dev/null); do ubus call "$_if" del_client "{\"addr\":\"$_target\",\"reason\":1,\"deauth\":true}" 2>/dev/null; done; fi
+                command -v ndsctl >/dev/null 2>&1 && ndsctl deauth "$_target" 2>/dev/null; _msg="Client $_target disconnected"
+            else _status="error"; _msg="Target MAC required"; fi ;;
         "set_static_lease"|"del_static_lease")
             if [ -n "$_target" ]; then
                 _sec="host_$(echo "$_target" | tr -d ':')"
@@ -225,19 +227,17 @@ execute_control() {
             _json_out=$(printf '%s\n' "$_output" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk 'BEGIN{printf "["} NR>1{printf ","} {printf "\"%s\"", $0} END{print "]"}')
             send_header; printf '{"status":"ok","command":"%s","output":%s}\n' "$_val" "$_json_out"; exit 0 ;;
         "set_smp_steering")
-            _s="${_val:-1}"; [ "$_s" = "on" ] || [ "$_s" = "true" ] && _s="1"; [ "$_s" = "off" ] || [ "$_s" = "false" ] && _s="0"
-            _c="$([ "$_s" = "1" ] && echo "f" || echo "0")"
-            for q in /sys/class/net/*/queues/rx-*/rps_cpus; do [ -e "$q" ] && echo "$_c" > "$q" 2>/dev/null; done
-            uci set system.@system[0].smp_steering="$_s" 2>/dev/null && uci commit system 2>/dev/null
-            _msg="SMP Packet Steering set to $_s" ;;
+            _s="${_val:-1}"; [ "$_s" = "on" ] || [ "$_s" = "true" ] && _s="1"; [ "$_s" = "off" ] || [ "$_s" = "false" ] && _s="0"; _c="$([ "$_s" = "1" ] && echo "f" || echo "0")"; for q in /sys/class/net/*/queues/rx-*/rps_cpus; do [ -e "$q" ] && echo "$_c" > "$q" 2>/dev/null; done; uci set system.@system[0].smp_steering="$_s" 2>/dev/null && uci commit system 2>/dev/null; _msg="SMP Packet Steering set to $_s" ;;
         "set_wps_action")
-            _act="${_val:-Toggle 5G Wi-Fi}"
-            uci set system.@system[0].wps_action="$_act" 2>/dev/null && uci commit system 2>/dev/null
-            _msg="WPS Button Action configured: $_act" ;;
+            _act="${_val:-Toggle 5G Wi-Fi}"; uci set system.@system[0].wps_action="$_act" 2>/dev/null && uci commit system 2>/dev/null; _msg="WPS Button Action configured: $_act" ;;
+        "set_dns_rebind")
+            _s="$([ "$_val" = "off" ] || [ "$_val" = "0" ] && echo 0 || echo 1)"; uci set dhcp.@dnsmasq[0].rebind_protection="$_s" && uci commit dhcp && /etc/init.d/dnsmasq reload >/dev/null 2>&1 & _msg="DNS Rebind Protection set to $_s" ;;
+        "set_wan_lockdown")
+            _s="$([ "$_val" = "off" ] || [ "$_val" = "0" ] && echo 0 || echo 1)"; uci set firewall.@defaults[0].input="$([ "$_s" = "1" ] && echo 'DROP' || echo 'ACCEPT')"; uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1 & _msg="WAN Management Lockdown set to $_s" ;;
+        "harden_security")
+            uci set dhcp.@dnsmasq[0].rebind_protection='1' && uci commit dhcp && /etc/init.d/dnsmasq reload >/dev/null 2>&1 & uci set wireless.default_radio0.ieee80211w='1'; uci set wireless.default_radio1.ieee80211w='1'; uci commit wireless && wifi reload >/dev/null 2>&1 & _msg="Router Security Hardened" ;;
         "backup_config")
-            _bpath="/tmp/backup-OpenWrt-c6.tar.gz"
-            sysupgrade -b "$_bpath" 2>/dev/null || tar -czf "$_bpath" -C / etc/config etc/shadow 2>/dev/null
-            _msg="Configuration archive generated at $_bpath" ;;
+            _bpath="/tmp/backup-OpenWrt-c6.tar.gz"; sysupgrade -b "$_bpath" 2>/dev/null || tar -czf "$_bpath" -C / etc/config etc/shadow 2>/dev/null; _msg="Configuration archive generated at $_bpath" ;;
         "set_quota"|"reset_quota"|"set_client_quota"|"toggle_cron_task"|"set_cron_schedule"|"set_homeassistant_webhook"|"trigger_ha_webhook")
             handle_analytics_action "$_cmd" "$_target" "$_val" "$_payload"; exit 0 ;;
         *) _status="error"; _msg="Unknown command: $_cmd" ;;

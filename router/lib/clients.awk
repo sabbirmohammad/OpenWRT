@@ -49,6 +49,7 @@ FILENAME == "/etc/archer_guard_clients.conf" {
 FILENAME == "/tmp/.cg_blocked" {
     for (i = 1; i <= NF; i++) {
         if ($i == "--mac-source") { m = tolower($(i + 1)); blocked[m] = 1; }
+        else if ($i ~ /^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/) { blocked[tolower($i)] = 1; }
     }
     next;
 }
@@ -101,9 +102,10 @@ FILENAME ~ /dhcp\.leases$/ && NF >= 4 {
     if (band[m] == "5GHz") c_ssid = (s5g != "" ? s5g : "5GHz Wi-Fi");
     else if (band[m] == "2.4GHz") c_ssid = (s2g != "" ? s2g : "2.4GHz Wi-Fi");
     else if (band[m] == "Guest") c_ssid = (sguest != "" ? sguest : "Guest Wi-Fi");
+    c_iso = (band[m] == "Guest") ? "true" : "false";
 
     if (!first) printf(",");
-    printf("{\"mac\":\"%s\",\"ip\":\"%s\",\"hostname\":\"%s\",\"nds_authenticated\":false,\"blocked\":%s,\"signal_dbm\":%s,\"connection_type\":\"%s\",\"is_static\":%s,\"ssid_name\":\"%s\",\"rx_bytes\":%s,\"tx_bytes\":%s,\"connected_seconds\":%s", m, ip, host, c_blk, c_sig, c_band, c_sta, c_ssid, c_rx, c_tx, c_conn);
+    printf("{\"mac\":\"%s\",\"ip\":\"%s\",\"hostname\":\"%s\",\"nds_authenticated\":false,\"blocked\":%s,\"signal_dbm\":%s,\"connection_type\":\"%s\",\"is_static\":%s,\"ssid_name\":\"%s\",\"is_isolated\":%s,\"rx_bytes\":%s,\"tx_bytes\":%s,\"connected_seconds\":%s", m, ip, host, c_blk, c_sig, c_band, c_sta, c_ssid, c_iso, c_rx, c_tx, c_conn);
     if (c_alias[m] != "") printf(",\"custom_name\":\"%s\"", c_alias[m]);
     if (c_dl_lim[m] != "") printf(",\"download_limit_kbps\":%s", c_dl_lim[m]);
     if (c_ul_lim[m] != "") printf(",\"upload_limit_kbps\":%s", c_ul_lim[m]);
@@ -131,9 +133,10 @@ END {
         if (band[m] == "5GHz") c_ssid = (s5g != "" ? s5g : "5GHz Wi-Fi");
         else if (band[m] == "2.4GHz") c_ssid = (s2g != "" ? s2g : "2.4GHz Wi-Fi");
         else if (band[m] == "Guest") c_ssid = (sguest != "" ? sguest : "Guest Wi-Fi");
+        c_iso = (band[m] == "Guest") ? "true" : "false";
 
         if (!first) printf(",");
-        printf("{\"mac\":\"%s\",\"ip\":\"%s\",\"hostname\":\"%s\",\"nds_authenticated\":false,\"blocked\":%s,\"signal_dbm\":%s,\"connection_type\":\"%s\",\"is_static\":%s,\"ssid_name\":\"%s\",\"rx_bytes\":%s,\"tx_bytes\":%s,\"connected_seconds\":%s", m, ip, host, c_blk, c_sig, c_band, c_sta, c_ssid, c_rx, c_tx, c_conn);
+        printf("{\"mac\":\"%s\",\"ip\":\"%s\",\"hostname\":\"%s\",\"nds_authenticated\":false,\"blocked\":%s,\"signal_dbm\":%s,\"connection_type\":\"%s\",\"is_static\":%s,\"ssid_name\":\"%s\",\"is_isolated\":%s,\"rx_bytes\":%s,\"tx_bytes\":%s,\"connected_seconds\":%s", m, ip, host, c_blk, c_sig, c_band, c_sta, c_ssid, c_iso, c_rx, c_tx, c_conn);
         if (c_alias[m] != "") printf(",\"custom_name\":\"%s\"", c_alias[m]);
         if (c_dl_lim[m] != "") printf(",\"download_limit_kbps\":%s", c_dl_lim[m]);
         if (c_ul_lim[m] != "") printf(",\"upload_limit_kbps\":%s", c_ul_lim[m]);

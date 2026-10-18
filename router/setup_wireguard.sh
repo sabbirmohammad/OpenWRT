@@ -21,10 +21,10 @@ get_public_endpoint() {
         return
     fi
     _ext_ip=""
-    if command -v curl >/dev/null 2>&1; then
-        _ext_ip=$(curl -s -m 3 https://api.ipify.org 2>/dev/null || true)
-    elif command -v uclient-fetch >/dev/null 2>&1; then
+    if command -v uclient-fetch >/dev/null 2>&1; then
         _ext_ip=$(uclient-fetch -q --timeout=3 -O - https://api.ipify.org 2>/dev/null || true)
+    elif command -v curl >/dev/null 2>&1; then
+        _ext_ip=$(curl -s -m 3 https://api.ipify.org 2>/dev/null || true)
     elif command -v wget >/dev/null 2>&1; then
         _ext_ip=$(wget -q -T 3 -O - https://api.ipify.org 2>/dev/null || true)
     fi

@@ -62,7 +62,7 @@ export default async function handler(req, res) {
       return res.status(200).json(globalThis.__localRouterStatus);
     }
 
-    if (process.env.NODE_ENV !== 'test' && (Date.now() - lastLocalCheckFailed > 10000)) {
+    if (process.env.ROUTER_SIM_ONLY !== 'true' && process.env.NODE_ENV !== 'test' && (Date.now() - lastLocalCheckFailed > 10000)) {
       try {
         const liveRes = await fetch('http://192.168.1.1/cgi-bin/api?action=status', { signal: AbortSignal.timeout(10000) });
         if (liveRes.ok) {

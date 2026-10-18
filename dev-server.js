@@ -236,7 +236,7 @@ const server = http.createServer(async (req, res) => {
     return res.status(200).json({ success: true, mac: cleanMac, status: 'AUTHENTICATED', simulated: true });
   }
 
-  if (pathname === '/api/router') {
+  if (pathname === '/api/router' || pathname === '/cgi-bin/api') {
     req.body = await parseBody(req);
     return routerHandler(req, res);
   }

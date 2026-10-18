@@ -37,6 +37,10 @@ fi
 
 # 5. Configure Smart WAN LED Hotplug & Smooth LED Intervals (LAN & Wi-Fi)
 printf "💡 Configuring Smart WAN & Smooth LED triggers (LAN & Wi-Fi)...\n"
+if [ -f "$SCRIPT_DIR/lib/99-firewall-guard" ]; then
+    scp -O -q "$SCRIPT_DIR/lib/99-firewall-guard" "$ROUTER_USER@$ROUTER_IP":/etc/hotplug.d/iface/99-firewall-guard
+    ssh -q "$ROUTER_USER@$ROUTER_IP" "chmod +x /etc/hotplug.d/iface/99-firewall-guard"
+fi
 if [ -f "$SCRIPT_DIR/lib/99-wan-led" ]; then
     scp -O -q "$SCRIPT_DIR/lib/99-wan-led" "$ROUTER_USER@$ROUTER_IP":/etc/hotplug.d/iface/99-wan-led
     ssh -q "$ROUTER_USER@$ROUTER_IP" "

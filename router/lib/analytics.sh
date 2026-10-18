@@ -227,12 +227,14 @@ handle_analytics_action() {
             ;;
         "trigger_ha_webhook")
             _wh_url=$(extract_param "webhook_url" "$_a_payload")
-            _mac="${_a_target:-3c:22:fb:1a:2b:3c}"
-            _state="${_a_val:-connected}"
-            if [ -n "$_wh_url" ] && command -v curl >/dev/null 2>&1; then
-                curl -s -m 3 -X POST -H "Content-Type: application/json" \
-                    -d "{\"device\":\"archer_c6\",\"mac\":\"$_mac\",\"state\":\"$_state\",\"timestamp\":$(date +%s)}" \
-                    "$_wh_url" >/dev/null 2>&1 &
+            _mac="${_a_target:-3c:22:fb:1a:2b:3c}"; _state="${_a_val:-connected}"
+            _p="{\"device\":\"archer_c6\",\"mac\":\"$_mac\",\"state\":\"$_state\",\"timestamp\":$(date +%s)}"
+            if [ -n "$_wh_url" ]; then
+                if command -v uclient-fetch >/dev/null 2>&1; then
+                    uclient-fetch -q --timeout=3 --header="Content-Type: application/json" --post-data="$_p" -O - "$_wh_url" >/dev/null 2>&1 &
+                elif command -v curl >/dev/null 2>&1; then
+                    curl -s -m 3 -X POST -H "Content-Type: application/json" -d "$_p" "$_wh_url" >/dev/null 2>&1 &
+                fi
             fi
             _a_msg="Home Assistant presence test triggered for $_mac ($_state)"
             ;;

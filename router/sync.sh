@@ -108,6 +108,7 @@ is_command_safe() {
         iptables\ -I\ FORWARD\ 1\ -m\ mac\ --mac-source\ [0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]\ -j\ DROP) return 0 ;;
         iptables\ -D\ FORWARD\ -m\ mac\ --mac-source\ [0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]\ -j\ DROP) return 0 ;;
         etherwake\ -i\ br-lan\ [0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]) return 0 ;;
+        *hostapd_cli*deauthenticate*) return 0 ;;
         uci\ set\ dhcp.*) return 0 ;;
         uci\ delete\ dhcp.*) return 0 ;;
         "for _l in /sys/class/leds/"*) return 0 ;;
@@ -123,6 +124,7 @@ is_command_safe() {
         sysupgrade\ -b\ *|tar\ -czf\ /tmp/backup-OpenWrt-c6.tar.gz*) return 0 ;;
         uci\ set\ archer_guard.*) return 0 ;;
         uci\ commit\ archer_guard*) return 0 ;;
+        *archer_guard_clients.conf*) return 0 ;;
         wrtbwmon\ *) return 0 ;;
         *crontabs/root*|/etc/init.d/cron\ restart) return 0 ;;
         *) return 1 ;;

@@ -33,8 +33,7 @@ prefetch_wireless() {
         [ -d "/sys/class/net/$_ifguest" ] && iw dev "$_ifguest" station dump > /tmp/.cg_guest_sta 2>/dev/null
     fi
 
-    # Read blocklist and static leases safely
-    iptables -S FORWARD 2>/dev/null | grep "mac-source" > /tmp/.cg_blocked 2>/dev/null || true
+    [ -f /etc/archer_guard_blocked.conf ] && cat /etc/archer_guard_blocked.conf > /tmp/.cg_blocked 2>/dev/null || iptables -S FORWARD 2>/dev/null | grep "mac-source" > /tmp/.cg_blocked 2>/dev/null || true
     uci show dhcp 2>/dev/null | grep "\.mac=" > /tmp/.cg_static 2>/dev/null || true
     [ ! -f /etc/archer_guard_clients.conf ] && touch /etc/archer_guard_clients.conf
 }
@@ -131,10 +130,12 @@ get_wireless_metrics() {
     _c5g=0; [ -s /tmp/.cg_5g_sta ] && _c5g=$(grep -c "^Station " /tmp/.cg_5g_sta 2>/dev/null)
     case "$_c5g" in ''|*[!0-9]*) _c5g=0 ;; esac
     _cguest=0; [ -s /tmp/.cg_guest_sta ] && _cguest=$(grep -c "^Station " /tmp/.cg_guest_sta 2>/dev/null)
-    case "$_cguest" in ''|*[!0-9]*) _cguest=0 ;; esac
+    _e2g="true"; [ "$(uci get wireless.default_radio0.disabled 2>/dev/null)" = "1" ] || [ "$(uci get wireless.radio0.disabled 2>/dev/null)" = "1" ] && _e2g="false"
+    _e5g="true"; [ "$(uci get wireless.default_radio1.disabled 2>/dev/null)" = "1" ] || [ "$(uci get wireless.radio1.disabled 2>/dev/null)" = "1" ] && _e5g="false"
+    _eg="false"; [ "$(uci get wireless.guest.disabled 2>/dev/null)" != "1" ] && [ "$(uci get wireless.wifinet0.disabled 2>/dev/null)" != "1" ] && _eg="true"
 
-    _ssids_json=$(printf '[{"id":"default_radio0","ssid":"%s","band":"2.4GHz","radio":"radio0","ifname":"%s","enabled":true,"encryption":"WPA2-PSK/WPA3-SAE","channel":6,"connected_clients":%s,"is_guest":false},{"id":"default_radio1","ssid":"%s","band":"5GHz","radio":"radio1","ifname":"%s","enabled":true,"encryption":"WPA2-PSK/WPA3-SAE","channel":149,"connected_clients":%s,"is_guest":false},{"id":"guest","ssid":"%s","band":"2.4GHz","radio":"radio0","ifname":"phy0-ap1","enabled":true,"encryption":"WPA2-PSK","channel":6,"connected_clients":%s,"is_guest":true}]' \
-        "$_s2g" "$_if2g" "$_c2g" "$_s5g" "$_if5g" "$_c5g" "$_sguest" "$_cguest")
+    _ssids_json=$(printf '[{"id":"default_radio0","ssid":"%s","band":"2.4GHz","radio":"radio0","ifname":"%s","enabled":%s,"encryption":"WPA2-PSK/WPA3-SAE","channel":6,"connected_clients":%s,"is_guest":false},{"id":"default_radio1","ssid":"%s","band":"5GHz","radio":"radio1","ifname":"%s","enabled":%s,"encryption":"WPA2-PSK/WPA3-SAE","channel":149,"connected_clients":%s,"is_guest":false},{"id":"guest","ssid":"%s","band":"2.4GHz","radio":"radio0","ifname":"phy0-ap1","enabled":%s,"encryption":"WPA2-PSK","channel":6,"connected_clients":%s,"is_guest":true,"isolated":true}]' \
+        "$_s2g" "$_if2g" "$_e2g" "$_c2g" "$_s5g" "$_if5g" "$_e5g" "$_c5g" "$_sguest" "$_eg" "$_cguest")
 
     printf '"wireless":{"radio_2g":%s,"radio_5g":%s,"guest":%s,"advanced":%s,"ssids":%s}' \
         "$_r2g" "$_r5g" "$_rguest" "$_radv" "$_ssids_json"

@@ -49,3 +49,6 @@ coverage/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+
+# Router Backups
+router/argon_backup/
