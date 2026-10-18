@@ -8,7 +8,7 @@
 CONFIG_FILE="/etc/opennds/sync.conf"
 [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
 
-API_SECRET="${ROUTER_SECRET_KEY:-admin_secret_c6}"
+API_SECRET="${ROUTER_SECRET_KEY:-$API_SECRET}"
 
 # Send standardized HTTP Headers with CORS and Cache-Control
 send_header() {
@@ -47,8 +47,6 @@ check_auth() {
     [ -n "$API_SECRET" ] && [ "$_auth" = "$API_SECRET" ] && _matched=1
     [ -n "$ROUTER_SECRET_KEY" ] && [ "$_auth" = "$ROUTER_SECRET_KEY" ] && _matched=1
     [ -n "$ARCHER_C6_SECRET" ] && [ "$_auth" = "$ARCHER_C6_SECRET" ] && _matched=1
-    [ "$_auth" = "admin_secret_c6" ] && _matched=1
-    [ "$_auth" = "30631b24d31de658288e57bd97cd8f71187ed2d2ae82bdcb" ] && _matched=1
 
     if [ "$_matched" -ne 1 ]; then
         send_header

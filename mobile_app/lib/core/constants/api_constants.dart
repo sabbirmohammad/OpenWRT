@@ -5,8 +5,8 @@ class ApiConstants {
   /// Default port for OpenWrt uhttpd
   static const int defaultPort = 80;
 
-  /// Default secret key for protected commands (from router/lib/common.sh)
-  static const String defaultSecret = 'admin_secret_c6';
+  /// Default secret key for protected commands (configurable in App Settings)
+  static const String defaultSecret = '';
 
   /// CGI-bin API endpoint path
   static const String apiPath = '/cgi-bin/api';

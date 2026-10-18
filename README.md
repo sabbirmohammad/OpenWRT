@@ -1,6 +1,43 @@
-# OpenWrt openNDS ⟷ Telegram Bot & Web Admin Captive Portal Bridge
+# 🛡️ ArcherGuard — OpenWrt Enterprise Management & Captive Portal Ecosystem
 
-A lightweight, production-ready serverless bridge deployed on **Vercel** to connect an **OpenWrt** router running the **openNDS** captive portal with a **Telegram Bot** and an **Admin Web Console** using **Upstash Redis** as a command queue.
+<div align="center">
+
+[![OpenWrt](https://img.shields.io/badge/OpenWrt-23.05+-00B2EE?logo=openwrt&logoColor=white)](https://openwrt.org/)
+[![Flutter](https://img.shields.io/badge/Flutter-3.9+-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-3.9+-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
+[![Vercel](https://img.shields.io/badge/Vercel-Serverless-black?logo=vercel&logoColor=white)](https://vercel.com/)
+[![Upstash Redis](https://img.shields.io/badge/Upstash-Redis-red?logo=redis&logoColor=white)](https://upstash.com/)
+[![Telegram Bot](https://img.shields.io/badge/Telegram-Bot%20API-2CA5E0?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
+[![WireGuard](https://img.shields.io/badge/VPN-WireGuard-88171A?logo=wireguard&logoColor=white)](https://www.wireguard.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**A high-performance, production-grade network control suite connecting OpenWrt routers with an interactive Telegram Bot authorization bridge, a serverless command queue, and a Flutter mobile management dashboard.**
+
+[Overview](#-system-overview) • [Architecture](#-system-architecture) • [Mobile App](#-archerguard-mobile-dashboard) • [Quick Start](#-quick-start--deployment-guide) • [Router Setup](#-openwrt-router-configuration) • [Security](#-security-hardening) • [License](#-license)
+
+</div>
+
+---
+
+## 🌟 System Overview
+
+ArcherGuard transforms an OpenWrt router (specifically optimized for MediaTek MT7621 / TP-Link Archer C6 v3/v4 and generic OpenWrt 23.05+ hardware) into a centrally managed network hub with three interconnected pillars:
+
+1. **⚡ OpenWrt Router Core (`router/`)**
+   - **openNDS Captive Portal with FAS:** Intercepts untrusted Wi-Fi clients and forwards them for authorization.
+   - **Instant Layer-2 Disconnect:** Radio kick hooks (`ubus call hostapd.* del_client`) force client devices to drop Wi-Fi instantly when expired or revoked.
+   - **Microservice Shell API (`router/lib/`):** Lightweight POSIX shell CGI endpoints for real-time telemetry, CAKE SQM QoS, MediaTek hardware NAT offloading, and dynamic iptables firewall rules.
+   - **Automated WireGuard VPN:** On-router Curve25519 cryptographic key generation and QR-code client config creator for secure remote administration.
+
+2. **☁️ Serverless Cloud Bridge (`api/` & `public/`)**
+   - **Telegram Bot Control Center:** Interactive approval prompts with custom durations (30m, 1h, 3h, unlimited), bandwidth throttling, device aliasing, and Bengali/English command parsing.
+   - **Web Admin Console (`/admin`):** Responsive web interface for desktop network oversight and manual device whitelisting.
+   - **Upstash Redis Queue:** High-throughput serverless command queue decoupling router polling from webhook executions.
+
+3. **📱 ArcherGuard Mobile Dashboard (`mobile_app/`)**
+   - **Cyberpunk Glossy Dark UI:** Responsive Flutter dashboard with custom hardware gauges and live sparkline traffic monitors.
+   - **Network Acceleration Tuning:** 1-tap toggles for CAKE SQM queue disciplines, Flow Offloading, and DoH (DNS over HTTPS).
+   - **Wi-Fi Radio Inspector:** Detailed 2.4GHz / 5GHz channels, Fast Roaming (802.11r), PMF (802.11w), and Router LED Stealth Mode.
 
 ---
 
@@ -17,10 +54,10 @@ A lightweight, production-ready serverless bridge deployed on **Vercel** to conn
                     │   OpenWrt Captive Portal│
                     │      (openNDS FAS)      │
                     └────────────┬────────────┘
-                                 │ 2. Opens Portal URL with ?clientmac=...
+                                 │ 2. Opens Portal URL (?fas=<base64>)
                                  ▼
                     ┌─────────────────────────┐
-                    │      Vercel App         │
+                    │     Vercel Cloud App    │
                     │   public/index.html     │
                     └────────────┬────────────┘
                                  │ 3. POST /api/request { name, mac }
@@ -29,75 +66,101 @@ A lightweight, production-ready serverless bridge deployed on **Vercel** to conn
            │                                       │
            ▼                                       ▼
 ┌─────────────────────────┐             ┌─────────────────────────┐
-│  Telegram Bot API       │             │   Admin Web Console     │
-│  (Sends Admin Prompt)   │             │   /admin (public/admin) │
+│    Telegram Bot API     │             │    Admin Web Console    │
+│  (Interactive Prompt)   │             │  /admin (Browser UI)    │
 └────────────┬────────────┘             └────────────┬────────────┘
              │                                       │
-     4a. Admin Clicks Button                 4b. Web Admin Clicks Accept
+     4a. Admin Clicks Button                 4b. Admin Clicks Accept
    [30m] [1h] [Unlimited] [Reject]         [30m] [1h] [3h] [Unlimited]
              │                                       │
              ▼                                       ▼
 ┌─────────────────────────┐             ┌─────────────────────────┐
-│  Telegram Webhook       │             │   Admin API Handler     │
-│  api/webhook (telegram) │             │      api/admin.js       │
+│    Telegram Webhook     │             │    Admin API Handler    │
+│       api/webhook       │             │       api/admin.js      │
 └────────────┬────────────┘             └────────────┬────────────┘
              │ 5a. RPUSH ndsctl command              │ 5b. RPUSH ndsctl command
              └───────────────────┬───────────────────┘
                                  ▼
                     ┌─────────────────────────┐
-                    │      Upstash Redis      │
-                    │  [pending_commands]     │
+                    │   Upstash Redis Queue   │
+                    │   [pending_commands]    │
                     └────────────▲────────────┘
                                  │
                  6. LPOP every 5s via /api/poll
                     (x-router-secret authenticated)
                                  │
-                    ┌────────────┴────────────┐
-                    │  OpenWrt Router Script  │
-                    │     router/sync.sh      │
-                    └────────────┬────────────┘
-                                 │ 7. Executes:
-                                 │    - 'ndsctl auth <MAC> <MINUTES>' (30 / 60 / 0)
-                                 │    - 'ndsctl deauth <MAC>' (Instant Revoke)
-                                 ▼
-                    ┌─────────────────────────┐
-                    │   Client Device State   │
-                    │  INTERNET ACCESS GRANTED│
-                    └─────────────────────────┘
+     ┌───────────────────────────┴───────────────────────────┐
+     │                                                       │
+     ▼                                                       ▼
+┌─────────────────────────┐             ┌─────────────────────────┐
+│   OpenWrt Router Script │             │   ArcherGuard Mobile    │
+│      router/sync.sh     │             │   Flutter App (LAN/VPN) │
+└────────────┬────────────┘             └────────────┬────────────┘
+             │ 7. Executes:                          │ Direct CGI REST API:
+             │    - ndsctl auth <MAC> <MINUTES>      │ - Hardware vitals & telemetry
+             │    - hostapd del_client (kick)        │ - SQM & Wi-Fi radio controls
+             ▼                                       │ - Device blocking & firewall
+┌─────────────────────────┐                          │
+│   Client Device State   │◄─────────────────────────┘
+│  INTERNET ACCESS GRANTED│
+└─────────────────────────┘
 ```
 
 ---
 
-## 📁 Project Structure
+## 📱 ArcherGuard Mobile Dashboard
+
+The companion mobile application (`mobile_app/`) is built using **Flutter & Dart** with an immersive dark cyberpunk aesthetic. It connects directly to the OpenWrt router over local Wi-Fi or securely over a WireGuard VPN tunnel.
+
+| Feature | Capabilities |
+| :--- | :--- |
+| **System Vitals** | Real-time CPU core loads, RAM allocation, internal flash storage, and system uptime. |
+| **Traffic Analytics** | Live upload/download Mbps speedometer, sparkline charts, and monthly data quota monitoring. |
+| **Device Controller** | Detailed client table (hostnames, MACs, signal dBm, connected frequency) with 1-tap firewall block. |
+| **Radio & Wi-Fi** | Toggle 2.4GHz / 5GHz radios, guest network isolation, TX power adjustments, 802.11r/w features. |
+| **Network Acceleration**| CAKE / FQ_CoDel SQM latency tuning, MediaTek MT7621 hardware flow offloading, and DNS presets. |
+| **Stealth Mode** | Instantly turn off all router hardware LEDs for bedroom or nighttime operation. |
+
+---
+
+## 📁 Repository Structure
 
 ```
-├── api/
-│   ├── admin.js             # Admin endpoint (list requests, accept/reject, queue commands)
-│   ├── confirm-auth.js      # Router auth confirmation endpoint (marks MAC as AUTHENTICATED)
-│   ├── login.js             # FAS client login endpoint (decodes FAS, saves PENDING in Redis)
-│   ├── pending-auth.js      # Router polling endpoint (returns pending MAC as text or JSON)
-│   ├── poll.js              # Router polling endpoint (secret-authenticated, pops from Redis)
-│   ├── request.js           # Client request endpoint (sends Telegram notification with buttons)
-│   ├── telegram.js          # Telegram webhook alias (forwards to webhook.js)
-│   └── webhook.js           # Telegram webhook receiver (processes buttons, queues ndsctl, updates buttons)
-├── lib/
-│   ├── opennds.js           # FAS helper function (decodes base64 ?fas= token to MAC/IP)
-│   └── opennds.ts           # TypeScript interfaces and helper for FAS token decoding
-├── public/
-│   ├── admin.html           # Admin Web Console (live requests, direct accept, manual auth)
-│   └── index.html           # Standalone responsive captive portal landing page (FAS-aware)
-├── router/
-│   ├── opennds_sync.init    # OpenWrt procd service init script (/etc/init.d/opennds_sync)
-│   ├── sync.conf.example    # Configuration file template for OpenWrt (/etc/opennds/sync.conf)
-│   └── sync.sh              # POSIX /bin/sh polling daemon for OpenWrt (supports poll & pending-auth)
-├── test/
-│   ├── endpoints.test.js    # Node.js tests for HTTP endpoints and status codes
-│   ├── test_router_sync.sh  # POSIX shell tests for router script security filter & JSON parsing
-│   └── unit.test.js         # Unit tests for MAC normalization, parsing & crypto
-├── .env.example             # Environment variable template
-├── package.json             # ES Module configuration and dependencies
-├── vercel.json              # Vercel deployment and caching headers configuration
-└── README.md                # Documentation and setup guide
+├── api/                     # Vercel Serverless API Endpoints
+│   ├── admin.js             # Web Admin Console backend (requests, manual auth, queue)
+│   ├── confirm-auth.js      # Captive portal authorization verification
+│   ├── deauth.js            # Direct client deauthentication endpoint
+│   ├── login.js             # FAS token decoder and pending session registrar
+│   ├── pending-auth.js      # Polling target for pending client MAC addresses
+│   ├── poll.js              # Secret-authenticated router command queue dispatcher
+│   ├── request.js           # Portal submission handler (dispatches Telegram prompt)
+│   ├── status.js            # Network state & client statistics endpoint
+│   ├── voucher.js           # Guest voucher passcode generator and verification
+│   └── webhook.js           # Telegram bot webhook (menu commands & callback queries)
+├── lib/                     # Serverless business logic & Telegram utilities
+│   ├── bot-menu.js          # Telegram keyboards, cards, and formatting engine
+│   ├── opennds.js           # openNDS FAS token decoding & MAC normalizers
+│   └── router/safety.js     # Command whitelist validator & timing-safe security guards
+├── mobile_app/              # ArcherGuard Flutter Mobile Application
+│   ├── lib/core/            # Glossy theme, colors, and API HTTP client services
+│   ├── lib/models/          # Immutable JSON models for router telemetry and clients
+│   └── lib/presentation/    # Dashboard, Network, Devices, Firewall & Security screens
+├── public/                  # Static Web Assets
+│   ├── admin.html           # Standalone Web Admin Console
+│   └── index.html           # High-conversion responsive captive portal landing page
+├── router/                  # OpenWrt Router POSIX Shell Scripts
+│   ├── archer_c6_helper.sh  # LED and hardware pin diagnostics for MediaTek MT7621
+│   ├── binauth.sh           # openNDS session expiry event hook
+│   ├── deploy.sh            # Automated router deployment & service installer
+│   ├── opennds_sync.init    # OpenWrt procd service definition (/etc/init.d/opennds_sync)
+│   ├── setup_wireguard.sh   # Automated WireGuard VPN server & client QR-code setup
+│   ├── sync.conf.example    # Router configuration template (/etc/opennds/sync.conf)
+│   ├── sync.sh              # Background command polling daemon with radio kick logic
+│   └── lib/                 # Modular CGI-bin shell handlers (metrics, actions, analytics)
+├── docs/specifications/     # Architecture designs and detailed component specifications
+├── test/                    # Automated Test Suite (149+ Unit & Shell Tests)
+├── .env.example             # Environment variables blueprint
+└── vercel.json              # Vercel serverless routing and cache headers
 ```
 
 ---
@@ -105,75 +168,46 @@ A lightweight, production-ready serverless bridge deployed on **Vercel** to conn
 ## 🚀 Quick Start & Deployment Guide
 
 ### 1. Telegram Bot Setup
-1. Open Telegram and search for [@BotFather](https://t.me/BotFather).
-2. Send `/newbot`, name your bot, and copy the **HTTP API Bot Token** (`TELEGRAM_BOT_TOKEN`).
+1. Message [@BotFather](https://t.me/BotFather) on Telegram and send `/newbot`.
+2. Name your bot and copy the **HTTP API Bot Token** (`TELEGRAM_BOT_TOKEN`).
 3. Get your Telegram Chat ID:
-   - Message your new bot or [@userinfobot](https://t.me/userinfobot) to find your numeric ID.
-   - For a group/channel, add the bot as administrator and retrieve the group ID (starts with `-100`).
+   - Message your new bot or [@userinfobot](https://t.me/userinfobot) to find your numeric ID (`TELEGRAM_CHAT_ID`).
+   - For an administrative group/channel, add the bot as admin and retrieve the group ID (starts with `-100`).
 
 ### 2. Upstash Redis Setup
-1. Sign up for free at [Upstash](https://console.upstash.com/).
-2. Create a new Redis Database.
-3. In the database dashboard under **REST API**, copy:
-   - `UPSTASH_REDIS_REST_URL` (e.g. `https://xxx.upstash.io`)
-   - `UPSTASH_REDIS_REST_TOKEN` (e.g. `AXxx...`)
+1. Create a free database at [Upstash Redis](https://console.upstash.com/).
+2. Under **REST API**, copy:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
 
-### 3. Generate a Router Secret Key
-Generate a cryptographically secure random token to protect the `/api/poll` endpoint:
+### 3. Generate Router Secret Key
+Generate a cryptographically secure random token:
 ```bash
 openssl rand -hex 24
 ```
-Keep this key handy as `ROUTER_SECRET_KEY`.
+Keep this string for `ROUTER_SECRET_KEY`.
 
----
-
-### 4. Deploy to Vercel
-
-#### Option A: Using Vercel CLI
+### 4. Deploy Cloud Bridge to Vercel
+Deploy using the Vercel CLI or connect your GitHub repository:
 ```bash
-# Install Vercel CLI if needed
 npm i -g vercel
-
-# Deploy and configure environment variables
 vercel
 ```
 
-#### Option B: Deploy via GitHub / Vercel Web Dashboard
-1. Push this repository to GitHub or GitLab.
-2. Import the project into [Vercel](https://vercel.com/new).
-3. In **Settings -> Environment Variables**, add:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-   - `UPSTASH_REDIS_REST_URL`
-   - `UPSTASH_REDIS_REST_TOKEN`
-   - `ROUTER_SECRET_KEY`
-   - `ADMIN_PASSWORD` *(optional; defaults to `ROUTER_SECRET_KEY` if not set)*
-4. Deploy the project. Note your deployment domain (e.g., `https://your-domain.vercel.app`).
+In your Vercel Project Settings (**Settings → Environment Variables**), set:
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `ROUTER_SECRET_KEY`
+- `ADMIN_PASSWORD` *(Optional; protects `/admin` console, falls back to `ROUTER_SECRET_KEY`)*
 
----
-
-### 5. Access the Web Admin Console (`/admin`)
-
-You can directly manage and authorize Wi-Fi access requests from your browser without opening Telegram!
-
-- **URL:** `https://<your-domain>.vercel.app/admin` (or `http://localhost:3000/admin` in local dev)
-- **Login Password:** Your configured `ADMIN_PASSWORD` (or `ROUTER_SECRET_KEY`).
-- **Features:**
-  - **Live Request Feed:** Real-time stream of incoming captive portal requests with user name, MAC address, IP, and status.
-  - **1-Click Direct Accept:** Accept pending users instantly with preset durations (**1 Hour**, **3 Hours**, **Unlimited**, or **Custom Minutes**).
-  - **1-Click Reject / Deauth:** Revoke access or reject requests with one click.
-  - **Manual Device Whitelist:** Directly authorize or deauthorize any MAC address without waiting for a captive portal form submission.
-  - **Auto-Sync:** Actions taken in the Web Console automatically log to Telegram to keep all admins informed.
-
----
-
-### 6. Register the Telegram Webhook
-
-Point your Telegram bot to the deployed `/api/webhook` endpoint:
+### 5. Register the Telegram Webhook
+Point Telegram to your deployed Vercel domain:
 ```bash
 curl -X POST "https://api.telegram.org/bot<YOUR_TELEGRAM_BOT_TOKEN>/setWebhook" \
      -H "Content-Type: application/json" \
-     -d '{"url": "https://<your-domain>.vercel.app/api/webhook"}'
+     -d '{"url": "https://<your-vercel-domain>.vercel.app/api/webhook"}'
 ```
 
 Verify status anytime:
@@ -183,26 +217,10 @@ curl "https://api.telegram.org/bot<YOUR_TELEGRAM_BOT_TOKEN>/getWebhookInfo"
 
 ---
 
-### 🤖 Telegram Bot Control Center & Interactive Menu
-
-The Telegram Bot includes a full-featured admin menu and persistent reply keyboard:
-
-| Button / Command | Function | Description |
-| :--- | :--- | :--- |
-| `📊 ড্যাশবোর্ড` (`/dashboard`) | **Live Dashboard** | Displays live network state and active connected users only. Terminated devices are strictly hidden. |
-| `🟢 অ্যাক্টিভ ইউজার` (`/active`) | **Active Users** | Shows total count and list of active devices with name, MAC, IP, granted duration, and connect time. |
-| `👥 প্রিভিয়াস ইউজার` (`/previous`) | **Previous Users** | Chronological log of past sessions, expired users, and disconnected devices. |
-| `📋 ইউজার ডিটেইলস` (`/details`) | **All User Cards** | Structured profile cards for every user (নাম, তারিখ, ম্যাক অ্যাড্রেস, আইপি অ্যাড্রেস, টাইমস্ট্যাম্প). |
-| `🧹 ক্লিন ড্যাশবোর্ড` (`/clean`) | **Clean Dashboard** | Purges all terminated and rejected records from Redis and refreshes the live active view. |
-| `⚙️ মেনু` (`/menu` or `/start`) | **Main Menu** | Initializes the bottom persistent keyboard and registers native client commands with BotFather API. |
-
----
-
 ## 📡 OpenWrt Router Configuration
 
-### 1. Configure openNDS FAS (Forwarding Authentication Service)
-Edit `/etc/config/opennds` on your router:
-
+### 1. Configure openNDS FAS
+SSH into your OpenWrt router and configure `/etc/config/opennds`:
 ```uci
 config opennds
     option enabled '1'
@@ -213,40 +231,28 @@ config opennds
     option fas_secure_enabled '1'
     option faskey 'none'
 ```
-*(Note: `option allow_preemptive_authentication '1'` is critical. It allows `ndsctl auth <MAC>` from the Telegram bot to immediately authorize clients even if their device went idle or temporarily timed out of the pre-authenticated table).*
 
-Also, ensure IPv6 router advertisements are disabled on the captive LAN interface so mobile phones don't bypass or loop:
+Disable IPv6 router advertisements on the captive interface to prevent loopbacks:
 ```sh
 uci set dhcp.lan.ra='disabled'
 uci set dhcp.lan.dhcpv6='disabled'
 uci commit dhcp
 /etc/init.d/odhcpd restart
-```
-
-Reload openNDS:
-```sh
 /etc/init.d/opennds restart
 ```
 
----
-
-### 2. Install Dependencies on OpenWrt
-SSH into your router:
+### 2. Install Sync Polling Daemon
+Install dependencies on OpenWrt:
 ```sh
 opkg update
 opkg install curl
 ```
-*(Note: `jsonfilter` is already built into OpenWrt by default).*
 
----
-
-### 3. Install the Sync Script on OpenWrt
-
+Deploy the sync daemon:
 1. Copy `router/sync.sh` to `/usr/bin/opennds_sync.sh` on the router:
    ```sh
    chmod +x /usr/bin/opennds_sync.sh
    ```
-
 2. Create `/etc/opennds/sync.conf`:
    ```sh
    mkdir -p /etc/opennds
@@ -257,107 +263,50 @@ opkg install curl
    LOG_TAG="opennds-sync"
    EOF
    ```
-
-3. Test manually first:
+3. Install and start the background `procd` service:
    ```sh
-   /usr/bin/opennds_sync.sh
-   ```
-
-4. Install as a background service managed by `procd`:
-   Copy `router/opennds_sync.init` to `/etc/init.d/opennds_sync`:
-   ```sh
+   cp router/opennds_sync.init /etc/init.d/opennds_sync
    chmod +x /etc/init.d/opennds_sync
    /etc/init.d/opennds_sync enable
    /etc/init.d/opennds_sync start
    ```
 
-Check router system logs:
+Check router logs:
 ```sh
 logread -e opennds-sync
 ```
 
----
-
-### 4. Instant Wi-Fi Deauthentication & Session Expiry Hook (Optional but Recommended)
-
-By default, openNDS revokes firewall permissions (`Layer 3`) when terminated or when session time expires, but client devices keep Wi-Fi (`Layer 2`) connected. Modern smartphones (Android/iOS) wait 1–2 minutes before running background connectivity checks.
-
-To make devices disconnect and show the login prompt within **5–10 seconds**:
-1. `router/sync.sh` already executes an immediate Wi-Fi radio kick (`ubus call hostapd.* del_client` / `iw dev station del`) whenever `ndsctl deauth` is received.
-2. For **natural session expiration** (e.g. when 30m or 60m runs out), enable the `binauth` hook in openNDS:
-   Copy `router/binauth.sh` to `/etc/opennds/binauth.sh` on the router:
-   ```sh
-   chmod +x /etc/opennds/binauth.sh
-   uci set opennds.@openNDS[0].binauth='/etc/opennds/binauth.sh'
-   uci commit opennds
-   /etc/init.d/opennds restart
-   ```
+### 3. Automated WireGuard Remote Setup
+To securely connect the **ArcherGuard Mobile App** to your router from anywhere without opening public ports:
+```sh
+chmod +x router/setup_wireguard.sh
+/bin/sh router/setup_wireguard.sh
+```
+The script automatically configures interface `wg0`, configures firewall forwarding, and displays a terminal QR code to import directly into your mobile device.
 
 ---
 
-### 5. openNDS Level 1 FAS Auto-Auth Flow
+## 🔒 Security Hardening
 
-If your openNDS router is configured for FAS Level 1 (`fasport`, `fasremoteurl`):
-1. **Client redirection**: openNDS redirects client browser to `https://<your-app>.vercel.app/?fas=<base64>`.
-2. **FAS decode & login**: The landing page decodes `fas` into `clientmac` and `clientip`, submitting to `/api/login` which marks the device as `PENDING` in Upstash Redis and adds it to `pending_macs`.
-3. **Router polling**: The router polls `/api/pending-auth`:
-   ```bash
-   PENDING_MAC=$(curl -s https://<your-app>.vercel.app/api/pending-auth)
-   ```
-4. **Router authorization & confirmation**:
-   ```bash
-   if [ -n "$PENDING_MAC" ] && [ "$PENDING_MAC" != "null" ]; then
-       ndsctl auth "$PENDING_MAC" 0
-       curl -s -X POST -d "mac=$PENDING_MAC" https://<your-app>.vercel.app/api/confirm-auth
-   fi
-   ```
-   *(Both plain text and JSON responses with `{ "mac": "..." }` are supported).*
+- **Anti-Brick Command Filter:** `router/sync.sh` strictly enforces an allowlist (`ndsctl auth <MAC> <MINUTES>` and `ndsctl deauth <MAC>`). Arbitrary commands or shell injection characters (`;`, `&&`, `|`, `` ` ``, `$`) are actively blocked and logged.
+- **Timing-Safe Crypto:** Endpoints use constant-time comparisons (`crypto.timingSafeEqual`) to eliminate side-channel timing attacks on router secrets.
+- **Strict Environment Isolation:** No hardcoded secrets or backdoors are stored in the codebase; all operational tokens are injected via environment variables or `/etc/opennds/sync.conf`.
+- **Layer-2 Client Deauth:** Immediate radio deauthentication via `hostapd` ubus ensures devices cannot remain in zombie connection states after session expiry.
+- **No-Store Edge Cache:** All polling endpoints send `Cache-Control: no-store` headers to prevent intermediate proxies from caching sensitive command queue messages.
 
 ---
 
-## 🔒 Security Best Practices Implemented
+## 🧪 Testing
 
-1. **Strict Command Whitelist:**
-   `router/sync.sh` validates incoming commands against strict POSIX pattern matching (`ndsctl auth <MAC> <minutes>` or `ndsctl deauth <MAC>`). Arbitrary commands or shell injections (`rm -rf`, `;`, `&&`, etc.) are actively rejected and logged.
-2. **Timing-Safe Secret Comparison:**
-   `/api/poll` compares `x-router-secret` using Node.js `crypto.timingSafeEqual` to eliminate timing attack vectors.
-3. **Markdown Format Escaping:**
-   `/api/request` escapes all Markdown delimiters from user-supplied names to prevent Telegram format injection.
-4. **Input Normalization:**
-   MAC addresses are strictly validated against `^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$` and normalized before passing to Telegram or Redis.
-5. **No-Cache Directives:**
-   `/api/poll` sends `Cache-Control: no-store` headers to ensure Vercel edge caches never store queue polling results.
+The repository includes a comprehensive automated test suite covering API endpoints, Telegram webhook parsing, FAS token decoding, and POSIX shell security validation:
 
----
-
-## 🧪 Local Testing
-
-Run all unit tests and shell script validation tests:
 ```bash
+# Run all unit tests & shell script validators
 npm test
 ```
-
-### Manual Endpoint Testing with `curl`
-
-#### 1. Simulate portal form submission:
-```bash
-curl -X POST http://localhost:3000/api/request \
-     -H "Content-Type: application/json" \
-     -d '{"name": "John Doe", "mac": "aa:bb:cc:dd:ee:ff"}'
-```
-
-#### 2. Simulate router polling:
-```bash
-curl -X GET http://localhost:3000/api/poll \
-     -H "x-router-secret: your_secret_key"
-```
-Response:
-```json
-{"command": "ndsctl auth aa:bb:cc:dd:ee:ff 60"}
-```
-*(or `{"command": null}` if no commands are pending).*
 
 ---
 
 ## 📜 License
-MIT License.
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more details.

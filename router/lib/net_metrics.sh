@@ -194,7 +194,7 @@ get_connected_clients() {
 get_network_acceleration_metrics() {
     _hwo="false"; _sqm="false"; _sqm_qd="cake"; _sqm_dl=95000; _sqm_ul=20000
     _wg="false"; _mwan="false"; _doh="false"
-    _gw="103.145.12.1"; _dns=""; _proto="PPPoE (Fiber Optic ONU)"; _mtu=1492
+    _gw=""; _dns=""; _proto="PPPoE (Fiber Optic ONU)"; _mtu=1492
 
     if command -v uci >/dev/null 2>&1; then
         _u_fo=$(uci get firewall.@defaults[0].flow_offloading 2>/dev/null)

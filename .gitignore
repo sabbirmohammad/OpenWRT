@@ -52,3 +52,21 @@ coverage/
 
 # Router Backups
 router/argon_backup/
+
+# Compiled Binaries, Archives & Mobile Releases (Publish via GitHub Releases instead)
+*.apk
+*.aab
+*.ipa
+*.dmg
+*.iso
+*.img
+*.bin
+*.tar.gz
+*.zip
+*.keystore
+*.jks
+**/android/app/key.properties
+
+# Temporary & Local Scratch files
+.temp/
+*.tmp

@@ -859,9 +859,9 @@ class _NetworkScreenState extends State<NetworkScreen> {
                             Expanded(
                               child: _buildMetricTile(
                                 label: 'Gateway IP',
-                                value: network?.gateway.isNotEmpty == true ? network!.gateway : '103.145.12.1',
+                                value: network?.gateway.isNotEmpty == true ? network!.gateway : '0.0.0.0',
                                 icon: Icons.router_outlined,
-                                onTap: () => _copyToClipboard(network?.gateway ?? '103.145.12.1', 'Gateway IP'),
+                                onTap: () => _copyToClipboard(network?.gateway ?? '0.0.0.0', 'Gateway IP'),
                               ),
                             ),
                           ],
