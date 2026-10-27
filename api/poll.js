@@ -70,14 +70,14 @@ export default async function handler(req, res) {
     const tasks = [redis.lpop('pending_commands')];
 
     // If router sent the list of physically connected Wi-Fi station MAC addresses,
-    // cache it in Redis with 60s TTL so the Telegram bot displays strictly live devices.
+    // cache it in Redis with 180s TTL so the Telegram bot displays strictly live devices.
     const connectedMacsHeader = req.headers['x-router-connected-macs'];
-    if (typeof connectedMacsHeader === 'string') {
+    if (typeof connectedMacsHeader === 'string' && connectedMacsHeader.trim().length > 0) {
       const liveMacs = connectedMacsHeader
         .split(',')
         .map(m => m.trim().toLowerCase().replace(/-/g, ':'))
         .filter(m => m.length > 0);
-      tasks.push(redis.set('router:live_connected_macs', JSON.stringify(liveMacs), { ex: 60 }));
+      tasks.push(redis.set('router:live_connected_macs', JSON.stringify(liveMacs), { ex: 180 }));
     }
 
     const [command] = await Promise.all(tasks);

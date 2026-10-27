@@ -11,10 +11,14 @@
 
 API_URL="${API_URL:-https://your-deployment.vercel.app/api/poll}"
 ROUTER_SECRET_KEY="${ROUTER_SECRET_KEY:-change_this_secret_key}"
-POLL_INTERVAL="${POLL_INTERVAL:-5}"
-IDLE_POLL_INTERVAL="${IDLE_POLL_INTERVAL:-30}"
-ACTIVE_POLL_INTERVAL="${ACTIVE_POLL_INTERVAL:-4}"
-ERROR_BACKOFF_INTERVAL="${ERROR_BACKOFF_INTERVAL:-15}"
+# Precision Quota-Optimized Polling Profile (Target: 25% - 30% monthly Upstash quota = ~5,000 commands/day)
+POLL_INTERVAL_ACTIVE="${POLL_INTERVAL_ACTIVE:-3}"        # 3s when guest clients are active/waiting
+POLL_INTERVAL_BURST="${POLL_INTERVAL_BURST:-3}"          # 3s for 60s after an admin command
+POLL_INTERVAL_DAY="${POLL_INTERVAL_DAY:-18}"             # 18s daytime idle (08:00 - 01:00)
+POLL_INTERVAL_NIGHT="${POLL_INTERVAL_NIGHT:-45}"         # 45s nighttime idle (01:00 - 08:00)
+ERROR_BACKOFF_INTERVAL="${ERROR_BACKOFF_INTERVAL:-15}"   # 15s backoff when network/API fails
+MAC_REPORT_INTERVAL="${MAC_REPORT_INTERVAL:-120}"        # Report connected devices every 2 minutes
+BURST_WINDOW_SECONDS=60
 LOG_TAG="${LOG_TAG:-opennds-sync}"
 
 log() {
@@ -52,9 +56,17 @@ get_nds_client_count() {
 http_get() {
     _url="$1"; _macs="$2"
     if command -v uclient-fetch >/dev/null 2>&1; then
-        uclient-fetch -q --timeout=10 --header="x-router-secret: $ROUTER_SECRET_KEY" --header="x-router-connected-macs: $_macs" --header="Accept: application/json, text/plain" -O - "$_url" 2>/dev/null
+        if [ -n "$_macs" ]; then
+            uclient-fetch -q --timeout=10 --header="x-router-secret: $ROUTER_SECRET_KEY" --header="x-router-connected-macs: $_macs" -O - "$_url" 2>/dev/null
+        else
+            uclient-fetch -q --timeout=10 --header="x-router-secret: $ROUTER_SECRET_KEY" -O - "$_url" 2>/dev/null
+        fi
     elif command -v curl >/dev/null 2>&1; then
-        curl -s -f -m 10 -H "x-router-secret: $ROUTER_SECRET_KEY" -H "x-router-connected-macs: $_macs" -H "Accept: application/json, text/plain" "$_url" 2>/dev/null
+        if [ -n "$_macs" ]; then
+            curl -s -f -m 10 -H "x-router-secret: $ROUTER_SECRET_KEY" -H "x-router-connected-macs: $_macs" -H "Accept: application/json, text/plain" "$_url" 2>/dev/null
+        else
+            curl -s -f -m 10 -H "x-router-secret: $ROUTER_SECRET_KEY" -H "Accept: application/json, text/plain" "$_url" 2>/dev/null
+        fi
     fi
 }
 
@@ -171,21 +183,29 @@ confirm_auth() {
 
 trap 'log "INFO" "Stopping sync daemon."; exit 0' INT TERM
 
-log "INFO" "Starting openNDS sync service on $API_URL (Idle: ${IDLE_POLL_INTERVAL}s, Active: ${ACTIVE_POLL_INTERVAL}s)"
+log "INFO" "Starting openNDS sync service on $API_URL (Active: ${POLL_INTERVAL_ACTIVE}s, Burst: ${POLL_INTERVAL_BURST}s, Day: ${POLL_INTERVAL_DAY}s, Night: ${POLL_INTERVAL_NIGHT}s)"
 
 _last_mac_report=0
+_last_command_time=0
 
 while true; do
+    _now=$(date +%s)
     _client_count=$(get_nds_client_count)
+    _hour=$(date +%H | sed 's/^0//')
+    [ -z "$_hour" ] && _hour=0
+
     if [ "$_client_count" -gt 0 ]; then
-        _poll_sleep="$ACTIVE_POLL_INTERVAL"
+        _poll_sleep="$POLL_INTERVAL_ACTIVE"
+    elif [ $((_now - _last_command_time)) -lt "$BURST_WINDOW_SECONDS" ]; then
+        _poll_sleep="$POLL_INTERVAL_BURST"
+    elif [ "$_hour" -ge 1 ] && [ "$_hour" -lt 8 ]; then
+        _poll_sleep="$POLL_INTERVAL_NIGHT"
     else
-        _poll_sleep="$IDLE_POLL_INTERVAL"
+        _poll_sleep="$POLL_INTERVAL_DAY"
     fi
 
-    # Report connected MACs periodically (every 60s) to conserve Redis quota
-    _now=$(date +%s)
-    if [ $((_now - _last_mac_report)) -ge 60 ]; then
+    # Report connected MACs periodically (every 120s) to conserve Redis quota
+    if [ $((_now - _last_mac_report)) -ge "$MAC_REPORT_INTERVAL" ]; then
         _connected_macs=$(get_connected_macs)
         _last_mac_report="$_now"
     else
@@ -202,6 +222,7 @@ while true; do
     elif [ -n "$resp" ]; then
         cmd=$(parse_command "$resp")
         if [ -n "$cmd" ] && [ "$cmd" != "null" ]; then
+            _last_command_time="$_now"
             if is_command_safe "$cmd"; then
                 case "$cmd" in
                     ndsctl\ *)
