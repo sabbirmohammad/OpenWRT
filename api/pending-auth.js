@@ -59,7 +59,10 @@ export default async function handler(req, res) {
       }
     } catch (dbErr) {
       console.error('[Redis Pending Auth Error]', dbErr);
-      return res.status(500).json({ error: 'Database connection failed.' });
+      return res.status(500).json({
+        error: 'Database connection failed.',
+        details: dbErr?.message || String(dbErr)
+      });
     }
   }
 

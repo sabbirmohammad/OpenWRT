@@ -48,18 +48,21 @@ case "$ACTION" in
         printf '}\n'
         ;;
     "clients")
+        check_auth ""
         send_header
         printf '{'
         get_connected_clients
         printf '}\n'
         ;;
     "analytics"|"quota")
+        check_auth ""
         send_header
         printf '{'
         get_bandwidth_quota_metrics
         printf '}\n'
         ;;
     "cron"|"crontab")
+        check_auth ""
         send_header
         printf '{'
         get_crontab_metrics

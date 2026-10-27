@@ -218,12 +218,20 @@ execute_control() {
             uci commit network && (/etc/init.d/network reload >/dev/null 2>&1 &) ;;
         "raw_cmd")
             [ -z "$_val" ] && _val="uptime"
-            # ANTI-BRICK SHIELD: Block dangerous, flashing, filesystem-destroying, or lockout commands
+            # SECURITY FILTER: Block metacharacters and command chaining
             case "$_val" in
-                *mtd*|*sysupgrade*|*flash_*|*fw_setenv*|*dd\ *|*mkfs*|*fdisk*|*parted*|*rm\ -rf*|*network.lan*|*ifdown\ lan*|*br-lan\ down*|*dhcp.lan.ignore*|*passwd*|*shadow*|*inittab*|*\:\(\)\{*)
-                    send_header; printf '{"status":"error","message":"SAFETY SHIELD: Command blocked to prevent router bricking","blocked":true}\n'; exit 0 ;;
+                *[\;\&\|\`\(\)\>\<]*|*[\$]*|*"
+"*)
+                    send_header; printf '{"status":"error","message":"SECURITY ALERT: Metacharacters and command chaining blocked","blocked":true}\n'; exit 0 ;;
             esac
-            _output=$(eval "$_val" 2>&1 | head -n 60)
+            # WHITELIST FILTER: Allow only verified safe network and diagnostic commands
+            case "$_val" in
+                ping\ *|traceroute\ *|nslookup\ *|logread*|dmesg*|uptime|free*|df*|netstat*|iwinfo*|cat\ /proc/cpuinfo|cat\ /proc/meminfo|cat\ /proc/version)
+                    ;;
+                *)
+                    send_header; printf '{"status":"error","message":"SECURITY ALERT: Command not in diagnostic allowlist","blocked":true}\n'; exit 0 ;;
+            esac
+            _output=$($_val 2>&1 | head -n 60)
             _json_out=$(printf '%s\n' "$_output" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk 'BEGIN{printf "["} NR>1{printf ","} {printf "\"%s\"", $0} END{print "]"}')
             send_header; printf '{"status":"ok","command":"%s","output":%s}\n' "$_val" "$_json_out"; exit 0 ;;
         "set_smp_steering")

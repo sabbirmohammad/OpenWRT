@@ -88,7 +88,8 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('[Poll Queue Exception]', error);
     return res.status(500).json({
-      error: 'Failed to retrieve command from Redis queue.'
+      error: 'Failed to retrieve command from Redis queue.',
+      details: error?.message || String(error)
     });
   }
 }

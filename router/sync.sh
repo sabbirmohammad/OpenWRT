@@ -12,6 +12,9 @@
 API_URL="${API_URL:-https://your-deployment.vercel.app/api/poll}"
 ROUTER_SECRET_KEY="${ROUTER_SECRET_KEY:-change_this_secret_key}"
 POLL_INTERVAL="${POLL_INTERVAL:-5}"
+IDLE_POLL_INTERVAL="${IDLE_POLL_INTERVAL:-30}"
+ACTIVE_POLL_INTERVAL="${ACTIVE_POLL_INTERVAL:-4}"
+ERROR_BACKOFF_INTERVAL="${ERROR_BACKOFF_INTERVAL:-15}"
 LOG_TAG="${LOG_TAG:-opennds-sync}"
 
 log() {
@@ -36,6 +39,14 @@ get_connected_macs() {
         done
         printf '%s' "$_macs" | sed 's/,$//'
     fi
+}
+
+get_nds_client_count() {
+    if command -v ndsctl >/dev/null 2>&1; then
+        _len=$(ndsctl json 2>/dev/null | jsonfilter -e '@.client_list_length' 2>/dev/null)
+        [ -n "$_len" ] && echo "$_len" && return
+    fi
+    echo 0
 }
 
 http_get() {
@@ -160,15 +171,34 @@ confirm_auth() {
 
 trap 'log "INFO" "Stopping sync daemon."; exit 0' INT TERM
 
-log "INFO" "Starting openNDS sync service on $API_URL (Interval: ${POLL_INTERVAL}s)"
+log "INFO" "Starting openNDS sync service on $API_URL (Idle: ${IDLE_POLL_INTERVAL}s, Active: ${ACTIVE_POLL_INTERVAL}s)"
+
+_last_mac_report=0
 
 while true; do
-    _connected_macs=$(get_connected_macs)
+    _client_count=$(get_nds_client_count)
+    if [ "$_client_count" -gt 0 ]; then
+        _poll_sleep="$ACTIVE_POLL_INTERVAL"
+    else
+        _poll_sleep="$IDLE_POLL_INTERVAL"
+    fi
+
+    # Report connected MACs periodically (every 60s) to conserve Redis quota
+    _now=$(date +%s)
+    if [ $((_now - _last_mac_report)) -ge 60 ]; then
+        _connected_macs=$(get_connected_macs)
+        _last_mac_report="$_now"
+    else
+        _connected_macs=""
+    fi
+
     resp=$(http_get "$API_URL" "$_connected_macs")
     _err=$?
 
     if [ $_err -ne 0 ]; then
-        log "WARN" "Poll failed (code $_err)."
+        log "WARN" "Poll failed (code $_err). Backing off for ${ERROR_BACKOFF_INTERVAL}s."
+        sleep "$ERROR_BACKOFF_INTERVAL"
+        continue
     elif [ -n "$resp" ]; then
         cmd=$(parse_command "$resp")
         if [ -n "$cmd" ] && [ "$cmd" != "null" ]; then
@@ -243,5 +273,5 @@ while true; do
         fi
     fi
 
-    sleep "$POLL_INTERVAL"
+    sleep "$_poll_sleep"
 done
