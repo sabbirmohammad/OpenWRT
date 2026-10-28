@@ -10,6 +10,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.archerguard.openwrt.ui.components.GlossyBottomBar
 import com.archerguard.openwrt.ui.components.GlossySidebarDrawer
 import com.archerguard.openwrt.ui.screens.dashboard.DashboardScreen
@@ -54,13 +57,15 @@ fun ArcherNavHost(
             modifier = modifier
         )
     } else {
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                ModalDrawerSheet(
-                    drawerContainerColor = GlossyColors.BackgroundSecondary
-                ) {
-                    GlossySidebarDrawer(
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            ModalNavigationDrawer(
+                drawerState = drawerState,
+                drawerContent = {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        ModalDrawerSheet(
+                            drawerContainerColor = GlossyColors.BackgroundSecondary
+                        ) {
+                            GlossySidebarDrawer(
                         status = uiState.status,
                         routerIp = uiState.routerIp,
                         onNavigateToSettings = {
@@ -96,10 +101,12 @@ fun ArcherNavHost(
                             viewModel.logout()
                         }
                     )
+                        }
+                    }
                 }
-            }
-        ) {
-            Scaffold(
+            ) {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Scaffold(
                 modifier = modifier.fillMaxSize(),
                 bottomBar = {
                     GlossyBottomBar(
@@ -220,11 +227,13 @@ fun ArcherNavHost(
                 }
             }
 
-            if (showSettingsSheet) {
-                SettingsSheet(
-                    viewModel = viewModel,
-                    onDismiss = { showSettingsSheet = false }
-                )
+                    if (showSettingsSheet) {
+                        SettingsSheet(
+                            viewModel = viewModel,
+                            onDismiss = { showSettingsSheet = false }
+                        )
+                    }
+                }
             }
         }
     }

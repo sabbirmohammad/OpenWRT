@@ -191,33 +191,18 @@ private fun HeaderSection(
             }
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = onRefresh,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(GlossyColors.GlassSurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Refresh",
-                    tint = GlossyColors.TextPrimary,
-                    modifier = if (uiState.isRefreshing) Modifier.rotate(rotation) else Modifier
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = onOpenMenu,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(GlossyColors.GlassSurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Menu",
-                    tint = GlossyColors.TextPrimary
-                )
-            }
+        IconButton(
+            onClick = onRefresh,
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(GlossyColors.GlassSurface)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Refresh",
+                tint = GlossyColors.TextPrimary,
+                modifier = if (uiState.isRefreshing) Modifier.rotate(rotation) else Modifier
+            )
         }
     }
 }
