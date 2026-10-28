@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -153,7 +156,10 @@ fun ToolsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Terminal,
                                 contentDescription = null,
@@ -165,20 +171,28 @@ fun ToolsScreen(
                                 text = "System Logs Console",
                                 color = GlossyColors.TextPrimary,
                                 fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             GlossyButton(
                                 text = "dmesg",
                                 onClick = { selectedLogType = "dmesg" },
-                                isPrimary = selectedLogType == "dmesg"
+                                isPrimary = selectedLogType == "dmesg",
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 5.dp),
+                                fontSize = 11.sp
                             )
                             GlossyButton(
                                 text = "logread",
                                 onClick = { selectedLogType = "logread" },
-                                isPrimary = selectedLogType == "logread"
+                                isPrimary = selectedLogType == "logread",
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 5.dp),
+                                fontSize = 11.sp
                             )
                         }
                     }
@@ -298,9 +312,23 @@ private fun SpecRow(label: String, value: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = GlossyColors.TextSecondary, fontSize = 13.sp)
-        Text(text = value, color = GlossyColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(
+            text = label,
+            color = GlossyColors.TextSecondary,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = value,
+            color = GlossyColors.TextPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1.4f, fill = false)
+        )
     }
 }

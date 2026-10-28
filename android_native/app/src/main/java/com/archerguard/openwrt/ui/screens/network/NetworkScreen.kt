@@ -33,6 +33,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import com.archerguard.openwrt.domain.model.NetworkInfo
 import com.archerguard.openwrt.ui.components.GlossyCard
 import com.archerguard.openwrt.ui.theme.GlossyColors
@@ -162,15 +165,22 @@ private fun WanGatewayCard(network: NetworkInfo) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1.2f)) {
                     Text("Gateway IP", color = GlossyColors.TextMuted, fontSize = 11.sp)
-                    Text(network.gateway, color = GlossyColors.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = network.gateway.ifBlank { "0.0.0.0" },
+                        color = GlossyColors.TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
-                Column {
+                Column(modifier = Modifier.weight(0.8f)) {
                     Text("MTU", color = GlossyColors.TextMuted, fontSize = 11.sp)
                     Text("${network.mtu}", color = GlossyColors.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Latency", color = GlossyColors.TextMuted, fontSize = 11.sp)
                     Text("${network.latencyMs} ms", color = GlossyColors.EmeraldMint, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
@@ -205,6 +215,7 @@ private fun SqmQosCard(
                         fontSize = 12.sp
                     )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 Switch(
                     checked = network.sqmEnabled,
                     onCheckedChange = onToggleSqm,
@@ -222,24 +233,30 @@ private fun SqmQosCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "↓ ${network.sqmDownloadMbps} Mbps  ↑ ${network.sqmUploadMbps} Mbps",
                             color = GlossyColors.LightBlue,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = "Queue Discipline: ${network.sqmQdisc.uppercase()}",
                             color = GlossyColors.TextMuted,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
-
+                    Spacer(modifier = Modifier.width(8.dp))
                     com.archerguard.openwrt.ui.components.GlossyButton(
                         text = "Tune",
                         onClick = onTune,
-                        isPrimary = false
+                        isPrimary = false,
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -259,38 +276,49 @@ private fun DnsPrivacyCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Default.Dns,
                         contentDescription = null,
                         tint = GlossyColors.LightBlue,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.padding(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "DNS over HTTPS (DoH)",
                         color = GlossyColors.TextPrimary,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-
+                Spacer(modifier = Modifier.width(8.dp))
                 com.archerguard.openwrt.ui.components.GlossyButton(
                     text = "Change",
                     onClick = onChangeDns,
-                    isPrimary = false
+                    isPrimary = false,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                    fontSize = 12.sp
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Provider: ${network.dohProvider}",
                 color = GlossyColors.TextSecondary,
-                fontSize = 13.sp
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "Upstream: ${network.dns}",
                 color = GlossyColors.TextMuted,
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -305,22 +333,27 @@ private fun WireguardTunnelCard(network: NetworkInfo) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Default.VpnKey,
                         contentDescription = null,
                         tint = GlossyColors.IsolatedLight,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.padding(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "WireGuard Tunnel",
                         color = GlossyColors.TextPrimary,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-
+                Spacer(modifier = Modifier.width(6.dp))
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -343,7 +376,9 @@ private fun WireguardTunnelCard(network: NetworkInfo) {
             Text(
                 text = "Interface: ${network.wireguardInterface} (${network.wireguardEndpoint})",
                 color = GlossyColors.TextSecondary,
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

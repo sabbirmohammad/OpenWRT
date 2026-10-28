@@ -39,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -150,7 +152,7 @@ private fun SecurityScoreCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "SECURITY RATING",
                         color = GlossyColors.TextSecondary,
@@ -167,9 +169,13 @@ private fun SecurityScoreCard(
                         },
                         color = scoreColor,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(12.dp))
 
                 CircularGauge(
                     value = score.toDouble(),
@@ -381,7 +387,10 @@ private fun AuditItem(name: String, passed: Boolean, points: Int) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
                 imageVector = if (passed) Icons.Default.Check else Icons.Default.Warning,
                 contentDescription = null,
@@ -392,9 +401,12 @@ private fun AuditItem(name: String, passed: Boolean, points: Int) {
             Text(
                 text = name,
                 color = GlossyColors.TextPrimary,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = if (passed) "+$points pts" else "0 pts",
             color = if (passed) GlossyColors.EmeraldMint else GlossyColors.TextMuted,

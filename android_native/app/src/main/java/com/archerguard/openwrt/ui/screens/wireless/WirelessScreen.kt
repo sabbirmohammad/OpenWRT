@@ -160,7 +160,10 @@ private fun RadioCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -175,45 +178,55 @@ private fun RadioCard(
                             modifier = Modifier.size(18.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = radio.ssid.ifEmpty { "Disabled Radio" },
                             color = GlossyColors.TextPrimary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Text(
                             text = band,
                             color = GlossyColors.TextSecondary,
-                            fontSize = 12.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     com.archerguard.openwrt.ui.components.GlossyButton(
                         text = "Share",
                         onClick = onShare,
-                        isPrimary = false
+                        isPrimary = false,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 5.dp),
+                        fontSize = 11.sp
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     com.archerguard.openwrt.ui.components.GlossyButton(
                         text = "Edit",
                         onClick = onEdit,
-                        isPrimary = false
+                        isPrimary = false,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 5.dp),
+                        fontSize = 11.sp
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
                             .background(if (radio.enabled) GlossyColors.EmeraldMint.copy(alpha = 0.2f) else GlossyColors.GlassSurface)
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 6.dp, vertical = 5.dp)
                     ) {
                         Text(
                             text = if (radio.enabled) "ACTIVE" else "OFF",
                             color = if (radio.enabled) GlossyColors.EmeraldMint else GlossyColors.TextMuted,
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -224,12 +237,20 @@ private fun RadioCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                MetricPill(label = "Channel", value = radio.channel.toString())
-                MetricPill(label = "TX Power", value = "${radio.txPowerDbm} dBm")
-                MetricPill(label = "Clients", value = "${radio.connectedClients}")
-                MetricPill(label = "Mode", value = radio.htmode)
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    MetricPill(label = "Channel", value = radio.channel.toString())
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    MetricPill(label = "TX Power", value = "${radio.txPowerDbm} dBm")
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    MetricPill(label = "Clients", value = "${radio.connectedClients}")
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    MetricPill(label = "Mode", value = radio.htmode)
+                }
             }
         }
     }

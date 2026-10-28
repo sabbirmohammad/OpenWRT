@@ -276,7 +276,10 @@ fun LoginScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Key,
                                 contentDescription = null,
@@ -291,6 +294,7 @@ fun LoginScreen(
                                 fontWeight = FontWeight.Medium
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Switch(
                             checked = rememberCredentials,
                             onCheckedChange = { rememberCredentials = it },
@@ -324,7 +328,8 @@ fun LoginScreen(
                                     text = uiState.loginError ?: "Authentication failed",
                                     color = GlossyColors.RoseCoral,
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
@@ -353,6 +358,20 @@ fun LoginScreen(
                         icon = Icons.Default.Lock,
                         isPrimary = true,
                         isLoading = uiState.isLoggingIn,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Explore Demo Mode Button
+                    GlossyButton(
+                        text = "Explore Demo Mode (Offline)",
+                        onClick = {
+                            viewModel.loadDemoMode()
+                            onLoginSuccess()
+                        },
+                        icon = Icons.Default.Shield,
+                        isPrimary = false,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

@@ -36,7 +36,10 @@ fun HwOffloadCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Default.Speed,
                         contentDescription = null,
@@ -44,7 +47,7 @@ fun HwOffloadCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "MediaTek HW NAT Offload",
                             color = GlossyColors.TextPrimary,
@@ -59,6 +62,7 @@ fun HwOffloadCard(
                         )
                     }
                 }
+                Spacer(modifier = Modifier.size(8.dp))
 
                 Switch(
                     checked = network.hwOffload,

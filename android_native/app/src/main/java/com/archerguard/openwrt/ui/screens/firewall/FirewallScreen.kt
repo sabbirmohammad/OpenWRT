@@ -33,6 +33,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import com.archerguard.openwrt.domain.model.FirewallInfo
 import com.archerguard.openwrt.domain.model.PortForwardRule
 import com.archerguard.openwrt.ui.components.GlossyCard
@@ -67,19 +70,27 @@ fun FirewallScreen(
                 Text(
                     text = "Firewall & Security",
                     color = GlossyColors.TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     com.archerguard.openwrt.ui.components.GlossyButton(
                         text = "DMZ",
                         onClick = { showDmzSheet = true },
-                        isPrimary = false
+                        isPrimary = false,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                        fontSize = 12.sp
                     )
                     com.archerguard.openwrt.ui.components.GlossyButton(
                         text = "+ Add Rule",
                         onClick = { showAddSheet = true },
-                        isPrimary = true
+                        isPrimary = true,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -172,14 +183,30 @@ private fun FirewallBlocklistSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(text = client.displayName, color = GlossyColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = client.mac, color = GlossyColors.TextSecondary, fontSize = 11.sp)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = client.displayName,
+                            color = GlossyColors.TextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = client.mac,
+                            color = GlossyColors.TextSecondary,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
                     com.archerguard.openwrt.ui.components.GlossyButton(
                         text = "Unblock",
                         onClick = { onUnblock(client.mac) },
-                        isPrimary = false
+                        isPrimary = false,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 5.dp),
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -196,7 +223,10 @@ private fun FirewallStatusCard(firewall: FirewallInfo) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -212,21 +242,27 @@ private fun FirewallStatusCard(firewall: FirewallInfo) {
                         )
                     }
                     Spacer(modifier = Modifier.padding(6.dp))
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = firewall.engine,
                             color = GlossyColors.TextPrimary,
                             fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = "State: ${firewall.status.uppercase()}",
                             color = GlossyColors.EmeraldMint,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Box(
                     modifier = Modifier
@@ -247,12 +283,20 @@ private fun FirewallStatusCard(firewall: FirewallInfo) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                FirewallMetric(label = "SYN Flood", active = firewall.synFlood)
-                FirewallMetric(label = "Drop Invalid", active = firewall.dropInvalid)
-                FirewallMetric(label = "DNS Rebind", active = firewall.dnsRebind)
-                FirewallMetric(label = "Anti-Spoof", active = firewall.antiSpoofing)
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    FirewallMetric(label = "SYN Flood", active = firewall.synFlood)
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    FirewallMetric(label = "Drop Invalid", active = firewall.dropInvalid)
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    FirewallMetric(label = "DNS Rebind", active = firewall.dnsRebind)
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    FirewallMetric(label = "Anti-Spoof", active = firewall.antiSpoofing)
+                }
             }
         }
     }
@@ -271,7 +315,9 @@ private fun FirewallMetric(label: String, active: Boolean) {
         Text(
             text = label,
             color = GlossyColors.TextSecondary,
-            fontSize = 11.sp
+            fontSize = 11.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -284,19 +330,25 @@ private fun PortForwardCard(rule: PortForwardRule) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = rule.name,
                     color = GlossyColors.TextPrimary,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "WAN :${rule.extPort} → ${rule.intIp}:${rule.intPort} (${rule.proto.uppercase()})",
                     color = GlossyColors.TextSecondary,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
 
             Box(
                 modifier = Modifier

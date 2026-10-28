@@ -19,6 +19,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +48,8 @@ fun DmzConfigSheet(
     var dmzIp by remember { mutableStateOf(currentDmzIp) }
     var enabled by remember { mutableStateOf(isEnabled) }
 
+    val scrollState = rememberScrollState()
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = GlossyColors.BackgroundSecondary
@@ -51,6 +57,7 @@ fun DmzConfigSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(scrollState)
                 .padding(20.dp)
         ) {
             Row(
@@ -58,7 +65,10 @@ fun DmzConfigSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Default.Security,
                         contentDescription = null,
@@ -70,9 +80,12 @@ fun DmzConfigSheet(
                         text = "DMZ (Demilitarized Zone)",
                         color = GlossyColors.TextPrimary,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 IconButton(onClick = onDismiss) {
                     Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = GlossyColors.TextSecondary)
                 }
@@ -85,10 +98,11 @@ fun DmzConfigSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Enable Exposed DMZ Host", color = GlossyColors.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Text("Forwards all unassigned incoming WAN ports", color = GlossyColors.TextMuted, fontSize = 11.sp)
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 Switch(
                     checked = enabled,
                     onCheckedChange = { enabled = it },

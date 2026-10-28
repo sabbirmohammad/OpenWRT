@@ -80,12 +80,13 @@ fun GlossyBottomBar(
 
                 Column(
                     modifier = Modifier
+                        .weight(1f)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = { onTabSelected(index) }
                         )
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .padding(vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box {
@@ -117,7 +118,9 @@ fun GlossyBottomBar(
                         text = item.label,
                         color = color,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
             }

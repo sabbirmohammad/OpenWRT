@@ -33,7 +33,10 @@ fun MasterWifiCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = Icons.Default.Wifi,
                     contentDescription = null,
@@ -41,7 +44,7 @@ fun MasterWifiCard(
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Master Wi-Fi Power",
                         color = GlossyColors.TextPrimary,
@@ -55,6 +58,7 @@ fun MasterWifiCard(
                     )
                 }
             }
+            Spacer(modifier = Modifier.size(8.dp))
 
             Switch(
                 checked = isWifiOn,

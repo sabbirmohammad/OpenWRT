@@ -674,6 +674,8 @@ private fun QuickActionsCard(
                     onClick = onDropCaches,
                     icon = Icons.Default.CleaningServices,
                     isPrimary = false,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 GlossyButton(
@@ -681,6 +683,8 @@ private fun QuickActionsCard(
                     onClick = onToggleLeds,
                     icon = Icons.Default.Nightlight,
                     isPrimary = false,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 GlossyButton(
@@ -688,6 +692,8 @@ private fun QuickActionsCard(
                     onClick = onReboot,
                     icon = Icons.Default.RestartAlt,
                     isPrimary = true,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
             }

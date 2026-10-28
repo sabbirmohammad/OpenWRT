@@ -35,6 +35,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextOverflow
 import com.archerguard.openwrt.domain.model.RouterStatus
 import com.archerguard.openwrt.ui.theme.GlossyColors
 
@@ -52,15 +57,21 @@ fun GlossySidebarDrawer(
     onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val scrollState = rememberScrollState()
+
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .width(300.dp)
+            .widthIn(max = 320.dp)
             .background(GlossyColors.BackgroundSecondary.copy(alpha = 0.98f))
-            .padding(20.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Column {
-            Spacer(modifier = Modifier.height(24.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .verticalScroll(scrollState)
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Router Header
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -79,17 +90,21 @@ fun GlossySidebarDrawer(
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "ArcherGuard",
                         color = GlossyColors.TextPrimary,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "$routerIp • OpenWrt",
                         color = GlossyColors.TextSecondary,
-                        fontSize = 12.sp
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -138,7 +153,7 @@ fun GlossySidebarDrawer(
                 onClick = onLogout
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
 
             HorizontalDivider(color = GlossyColors.GlassBorderLight)
             Spacer(modifier = Modifier.height(12.dp))
@@ -154,13 +169,15 @@ fun GlossySidebarDrawer(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 GlossyButton(
                     text = "Flush",
                     onClick = onFlushRam,
                     icon = Icons.Default.CleaningServices,
                     isPrimary = false,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 GlossyButton(
@@ -168,6 +185,8 @@ fun GlossySidebarDrawer(
                     onClick = onToggleLeds,
                     icon = Icons.Default.Nightlight,
                     isPrimary = false,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 GlossyButton(
@@ -175,6 +194,8 @@ fun GlossySidebarDrawer(
                     onClick = onReboot,
                     icon = Icons.Default.RestartAlt,
                     isPrimary = true,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
             }

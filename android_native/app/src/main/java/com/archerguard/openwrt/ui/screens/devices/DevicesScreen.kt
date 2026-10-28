@@ -95,8 +95,12 @@ fun DevicesScreen(
                     text = "Connected Clients",
                     color = GlossyColors.TextPrimary,
                     fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
@@ -282,14 +286,18 @@ private fun DeviceCard(
                 Text(
                     text = "Traffic: ↓ ${client.formattedRx}  ↑ ${client.formattedTx}",
                     color = GlossyColors.TextMuted,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 GlossyButton(
                     text = "Kick",
                     onClick = onKick,
                     icon = Icons.Default.PersonRemove,
                     isPrimary = false,
-                    modifier = Modifier.height(34.dp)
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
         }

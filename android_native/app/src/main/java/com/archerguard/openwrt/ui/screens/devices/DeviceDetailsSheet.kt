@@ -8,7 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Close
@@ -49,6 +53,8 @@ fun DeviceDetailsSheet(
 ) {
     var showRenameDialog by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = GlossyColors.BackgroundSecondary
@@ -56,6 +62,7 @@ fun DeviceDetailsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(scrollState)
                 .padding(20.dp)
         ) {
             Row(
@@ -63,17 +70,21 @@ fun DeviceDetailsSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = client.displayName,
                         color = GlossyColors.TextPrimary,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = client.ip,
                         color = GlossyColors.LightBlue,
-                        fontSize = 13.sp
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 IconButton(onClick = onDismiss) {
@@ -99,33 +110,39 @@ fun DeviceDetailsSheet(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 GlossyButton(
                     text = "Rename",
                     onClick = { showRenameDialog = true },
                     icon = Icons.Default.DriveFileRenameOutline,
                     isPrimary = false,
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 GlossyButton(
-                    text = "Kick Client",
+                    text = "Kick",
                     onClick = {
                         onKick()
                         onDismiss()
                     },
                     icon = Icons.Default.PersonRemove,
                     isPrimary = false,
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 GlossyButton(
-                    text = "Block MAC",
+                    text = "Block",
                     onClick = {
                         onBlock()
                         onDismiss()
                     },
                     icon = Icons.Default.Block,
                     isPrimary = true,
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
+                    fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -173,9 +190,22 @@ private fun DetailRow(label: String, value: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, color = GlossyColors.TextSecondary, fontSize = 13.sp)
-        Text(text = value, color = GlossyColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(
+            text = label,
+            color = GlossyColors.TextSecondary,
+            fontSize = 13.sp,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value,
+            color = GlossyColors.TextPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1.3f, fill = false)
+        )
     }
 }
