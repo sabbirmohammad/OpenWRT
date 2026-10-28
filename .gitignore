@@ -75,3 +75,4 @@ release-output/
 .temp/
 *.tmp
 .agents/
+.kotlin/
