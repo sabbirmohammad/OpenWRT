@@ -168,6 +168,8 @@ class SsidDetailSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SsidDetailClients(ssid: ssid, clients: clients),
+                  const SizedBox(height: 20),
                   SsidDetailTraffic(
                     ssid: ssid,
                     isTopTraffic: isTopTraffic,
@@ -183,8 +185,6 @@ class SsidDetailSheet extends StatelessWidget {
                     qualityText: qualityText,
                     avgSignalText: avgSignalText,
                   ),
-                  const SizedBox(height: 20),
-                  SsidDetailClients(ssid: ssid, clients: clients),
                   const SizedBox(height: 20),
                 ],
               ),

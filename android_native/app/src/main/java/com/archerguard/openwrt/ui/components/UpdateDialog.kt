@@ -25,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -148,7 +150,8 @@ fun UpdateDialog(
             dismissOnClickOutside = state != UpdateDialogState.DOWNLOADING
         )
     ) {
-        Card(
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
@@ -484,6 +487,7 @@ fun UpdateDialog(
             }
         }
     }
+}
 }
 
 private fun formatBytes(bytes: Long): String {

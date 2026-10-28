@@ -39,6 +39,15 @@ class SsidCard extends StatelessWidget {
     final qualityPercent = WirelessInfo.getSsidSignalQualityPercent(ssid, allClients);
     final qualityText = WirelessInfo.getSsidSignalQualityText(qualityPercent);
 
+    final matchingClients = allClients.where((c) {
+      if (c.connectionType.toLowerCase() == 'lan' || c.connectionType.toLowerCase() == 'ethernet') {
+        return false;
+      }
+      final clientSsid = c.ssidName.trim().toLowerCase();
+      final cardSsid = ssid.ssid.trim().toLowerCase();
+      return clientSsid.isNotEmpty && clientSsid == cardSsid;
+    }).toList();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: GlossyCard(
@@ -142,8 +151,95 @@ class SsidCard extends StatelessWidget {
                 children: [
                   Expanded(child: _buildInfoItem('Security', ssid.encryption)),
                   Expanded(child: _buildInfoItem('Channel', 'Ch ${ssid.channel}')),
-                  Expanded(child: _buildInfoItem('Clients', '${ssid.connectedClients} Connected')),
+                  Expanded(
+                    child: InkWell(
+                      onTap: onDevices,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Text('Clients', style: TextStyle(color: GlossyColors.textMuted, fontSize: 11, fontWeight: FontWeight.w500)),
+                                SizedBox(width: 3),
+                                Icon(Icons.touch_app_rounded, size: 10, color: GlossyColors.lightBlue),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${ssid.connectedClients} Connected',
+                              style: const TextStyle(color: GlossyColors.lightBlue, fontSize: 13, fontWeight: FontWeight.w700),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onDevices,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: (matchingClients.isNotEmpty ? GlossyColors.primaryBlue : Colors.white)
+                        .withValues(alpha: matchingClients.isNotEmpty ? 0.08 : 0.03),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: matchingClients.isNotEmpty
+                          ? GlossyColors.primaryBlue.withValues(alpha: 0.25)
+                          : GlossyColors.glassBorderLight,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        matchingClients.isNotEmpty ? Icons.devices_rounded : Icons.devices_outlined,
+                        size: 15,
+                        color: matchingClients.isNotEmpty ? GlossyColors.lightBlue : GlossyColors.textMuted,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          matchingClients.isNotEmpty
+                              ? 'Active: ${matchingClients.map((c) => c.displayName).take(2).join(', ')}${matchingClients.length > 2 ? ' +${matchingClients.length - 2} more' : ''}'
+                              : '0 devices currently connected',
+                          style: TextStyle(
+                            color: matchingClients.isNotEmpty ? GlossyColors.textPrimary : GlossyColors.textMuted,
+                            fontSize: 11,
+                            fontWeight: matchingClients.isNotEmpty ? FontWeight.w600 : FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${matchingClients.isNotEmpty ? matchingClients.length : 0} online',
+                        style: TextStyle(
+                          color: matchingClients.isNotEmpty ? GlossyColors.emeraldMint : GlossyColors.textMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 15,
+                        color: matchingClients.isNotEmpty ? GlossyColors.lightBlue : GlossyColors.textMuted,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),

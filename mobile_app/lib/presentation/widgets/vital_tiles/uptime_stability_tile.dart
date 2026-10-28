@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/glossy_colors.dart';
-import '../../../core/utils/formatters.dart';
 
 /// Graphical tile displaying System Uptime with stability indicators.
 class UptimeStabilityTile extends StatelessWidget {

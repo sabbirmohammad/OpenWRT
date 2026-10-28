@@ -241,6 +241,7 @@ void main() {
       final editButtons = find.text('Edit');
       expect(editButtons, findsWidgets);
 
+      await tester.ensureVisible(editButtons.first);
       await tester.tap(editButtons.first);
       await tester.pumpAndSettle();
 
@@ -262,6 +263,7 @@ void main() {
       final shareButtons = find.text('Share');
       expect(shareButtons, findsWidgets);
 
+      await tester.ensureVisible(shareButtons.first);
       await tester.tap(shareButtons.first);
       await tester.pumpAndSettle();
 
@@ -318,8 +320,8 @@ void main() {
       final ssidText = find.text('Archer_C6_5G');
       expect(ssidText, findsWidgets);
 
-      await tester.ensureVisible(ssidText.first);
-      await tester.tap(ssidText.first);
+      await tester.ensureVisible(ssidText.last);
+      await tester.tap(ssidText.last);
       await tester.pumpAndSettle();
 
       // Detailed Sheet should be open
@@ -341,12 +343,12 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // Find all switches (first is Master Wi-Fi, second is default_radio0)
+      // Find all switches on active SSIDs
       final switches = find.byType(Switch);
       expect(switches, findsWidgets);
 
-      // Tap switch on active SSID (default_radio0 is at index 1)
-      final radio0Switch = switches.at(1);
+      // Tap switch on active SSID (default_radio0 is the first SSID switch)
+      final radio0Switch = switches.first;
       await tester.ensureVisible(radio0Switch);
       await tester.tap(radio0Switch);
       await tester.pumpAndSettle();

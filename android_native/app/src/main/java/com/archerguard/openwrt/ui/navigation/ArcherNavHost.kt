@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.LayoutDirection
 import com.archerguard.openwrt.ui.components.GlossyBottomBar
 import com.archerguard.openwrt.ui.components.GlossySidebarDrawer
@@ -61,10 +62,11 @@ fun ArcherNavHost(
             ModalNavigationDrawer(
                 drawerState = drawerState,
                 drawerContent = {
-                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                        ModalDrawerSheet(
-                            drawerContainerColor = GlossyColors.BackgroundSecondary
-                        ) {
+                    ModalDrawerSheet(
+                        drawerContainerColor = GlossyColors.BackgroundSecondary,
+                        drawerShape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp)
+                    ) {
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                             GlossySidebarDrawer(
                         status = uiState.status,
                         routerIp = uiState.routerIp,
@@ -150,6 +152,7 @@ fun ArcherNavHost(
                             )
                             2 -> WirelessScreen(
                                 wireless = uiState.status.wireless,
+                                clients = uiState.status.clients,
                                 onSaveSsid = { band, ssid, key, isHidden ->
                                     viewModel.executeRouterAction(
                                         "save_ssid",
