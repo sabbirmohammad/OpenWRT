@@ -62,28 +62,67 @@ class GithubUpdateService(
                 .header("User-Agent", "ArcherGuard-Android")
                 .build()
 
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext null
-                val body = response.body?.string() ?: return@withContext null
-                val release = json.decodeFromString<GithubRelease>(body)
-                val remoteVer = release.tagName.removePrefix("v").trim()
-                val hasNewVer = isNewerVersion(remoteVer, currentVersion)
+            val apiSuccess = try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()
+                        if (body != null) {
+                            val release = json.decodeFromString<GithubRelease>(body)
+                            val remoteVer = release.tagName.removePrefix("v").trim()
+                            val hasNewVer = isNewerVersion(remoteVer, currentVersion)
 
-                // Search for APK asset or construct direct GitHub release asset URL
-                val apkAsset = release.assets.firstOrNull { it.name.endsWith(".apk", ignoreCase = true) }
-                val apkUrl = apkAsset?.browserDownloadUrl
-                    ?: "https://github.com/$repo/releases/download/${release.tagName}/ArcherGuard-${release.tagName}.apk"
-                val apkSize = apkAsset?.size ?: 0L
+                            // Search for APK asset or construct direct GitHub release asset URL
+                            val apkAsset = release.assets.firstOrNull { it.name.endsWith(".apk", ignoreCase = true) }
+                            val apkUrl = apkAsset?.browserDownloadUrl
+                                ?: "https://github.com/$repo/releases/download/${release.tagName}/ArcherGuard-${release.tagName}.apk"
+                            val apkSize = apkAsset?.size ?: 0L
 
-                UpdateInfo(
-                    hasUpdate = hasNewVer,
-                    latestVersion = release.tagName,
-                    releaseNotes = release.body.ifEmpty { "Performance optimizations and bug fixes." },
-                    downloadUrl = release.htmlUrl,
-                    apkDownloadUrl = apkUrl,
-                    apkSize = apkSize
-                )
+                            return@withContext UpdateInfo(
+                                hasUpdate = hasNewVer,
+                                latestVersion = release.tagName,
+                                releaseNotes = release.body.ifEmpty { "Performance optimizations and bug fixes." },
+                                downloadUrl = release.htmlUrl,
+                                apkDownloadUrl = apkUrl,
+                                apkSize = apkSize
+                            )
+                        }
+                    }
+                    false
+                }
+            } catch (e: Exception) {
+                false
             }
+
+            // Fallback: Query web redirect if API was rate-limited
+            try {
+                val webRequest = Request.Builder()
+                    .url("https://github.com/$repo/releases/latest")
+                    .header("User-Agent", "ArcherGuard-Android")
+                    .build()
+                client.newCall(webRequest).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val finalUrl = response.request.url.toString()
+                        val tag = finalUrl.substringAfterLast("/")
+                        if (tag.startsWith("v")) {
+                            val remoteVer = tag.removePrefix("v").trim()
+                            val hasNewVer = isNewerVersion(remoteVer, currentVersion)
+                            val apkUrl = "https://github.com/$repo/releases/download/$tag/ArcherGuard-$tag.apk"
+                            return@withContext UpdateInfo(
+                                hasUpdate = hasNewVer,
+                                latestVersion = tag,
+                                releaseNotes = "Performance optimizations, bug fixes, and layout improvements.",
+                                downloadUrl = finalUrl,
+                                apkDownloadUrl = apkUrl,
+                                apkSize = 12300000L
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore fallback error
+            }
+
+            null
         } catch (e: Exception) {
             null
         }
