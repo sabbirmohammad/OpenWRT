@@ -41,79 +41,72 @@ The following components and infrastructure have already been designed and writt
   * Sub-25ms remote execution latency: Eliminates the 5-second polling queue delay entirely.
   * Router sync daemon (`router/sync.sh`): Freed from background telemetry reporting and cloud polling, dedicated purely to local openNDS captive portal & Telegram bot operations.
 * [x] **OpenWrt Firmware WireGuard Support:** Archer C6 MT7621 hardware-accelerated WireGuard kernel module (`kmod-wireguard`, `wireguard-tools`) with `10.14.0.1/24` subnet.
-* [x] **Android Application WireGuard Gateway Integration:** Flutter `ApiService` upgraded with direct failover between Local Wi-Fi (`http://192.168.1.1/cgi-bin/api`) and WireGuard VPN (`http://10.14.0.1/cgi-bin/api`).
+* [x] **Android Application WireGuard Gateway Integration:** Native Android `RouterApiService` upgraded with direct failover between Local Wi-Fi (`http://192.168.1.1/cgi-bin/api`) and WireGuard VPN (`http://10.14.0.1/cgi-bin/api`).
 
 
 ### 3. Mobile Application Architecture (`android_native/`, formerly `mobile_app/`) — [REPLACED WITH NATIVE KOTLIN ✅]
 > **Architecture Note:** The legacy Flutter mobile application (`mobile_app/`) has been completely retired and replaced by the active native Kotlin / Jetpack Compose application located in `android_native/`.
-* [x] **Modular Architecture & Dependency Configuration:** Configured `pubspec.yaml` with required dependencies (`http`, `shared_preferences`, `intl`, `local_auth`).
-* [x] **Cyber-Dark Design System Foundation:**
-  * `core/theme/cyber_colors.dart`: OLED `#0A0E17`, Electric Cyan `#00F2FE`, Emerald `#00E676`, and full 14-token neon palette and gradients matching `01_BASE_DESIGN_SYSTEM.md`.
-  * `core/theme/cyber_typography.dart`: Plus Jakarta Sans & JetBrains Mono typography tokens for headlines, body, metrics, and terminal.
-  * `core/theme/cyber_theme.dart`: Material 3 dark theme with transparent app bar, neon dialogs, sheets, buttons, and switches.
+* [x] **Modular Architecture & Dependency Configuration:** Configured `build.gradle.kts` with required AndroidX, Jetpack Compose, Material 3, and Serialization dependencies.
+* [x] **Modern Glossy Design System Foundation:**
+  * `ui/theme/GlossyColors.kt`: OLED `#0A0E17`, Electric Cyan `#00F2FE`, Emerald `#00E676`, and full neon palette and gradients matching `01_BASE_DESIGN_SYSTEM.md`.
+  * `ui/theme/GlossyTheme.kt`: Modern Compose dark theme with transparent system bars, glossy dialogs, sheets, buttons, and switches.
 * [x] **Reusable Component Suite:**
-  * `widgets/glass_card.dart`: Frosted acrylic glass blur (`BackdropFilter` sigma 12), neon glowing rims, and tactile feedback.
-  * `widgets/cyber_badge.dart`: Reusable status pills with pulsing LED dot options for port speeds, connection modes, and hardware statuses.
-  * `widgets/neon_button.dart`: Tactical neon-bordered action buttons with loading states and haptic indicators.
-  * `widgets/animated_speedometer.dart`: 60 FPS CustomPainter radial speedometer.
-  * `widgets/port_visualizer.dart`: Physical 5-port RJ45 Ethernet switch visualizer with link status LEDs.
-  * `widgets/vital_gauge.dart`: CPU, RAM (with 1-tap cache flush), and Flash storage ring gauges.
-  * `widgets/live_traffic_chart.dart`: Real-time throughput sparkline.
-* [x] **Adaptive 5-Tab Navigation Shell & Settings (`main.dart`):**
-  * Persistent tab navigation using `IndexedStack` to maintain screen scroll states across all 5 modules.
-  * Responsive adaptation: Compact bottom navigation bar for phones, side-docked `NavigationRail` for tablets (width >= 600dp).
-  * Real-time AppBar status pill (`🟢 4ms (Local Wi-Fi)` / `🔷 65ms (Cloud)` / `🔴 Offline`) with tap-to-reconnect.
-  * Advanced Hybrid Gateway Settings bottom sheet with connection tester, URL reset chips, biometric security lock toggle, and stealth mode controls.
+  * `ui/components/GlossyCard.kt`: Frosted acrylic glass styling, subtle border highlights, and tactile feedback.
+  * `ui/components/CircularGauge.kt`: High-performance Compose Canvas radial gauges and speedometer.
+  * `ui/components/TrafficSparkline.kt`: Real-time network throughput sparkline.
+* [x] **Adaptive Navigation Shell & Settings:**
+  * Persistent tab navigation maintaining screen states across modules.
+  * Real-time connection status pill with tap-to-reconnect.
+  * Advanced Gateway Settings bottom sheet with connection tester, URL reset chips, biometric security lock toggle, and stealth mode controls.
 * [x] **Data & Networking Services:**
-  * `models/router_status.dart`: Complete JSON deserializer matching the firmware schema.
-  * `core/services/api_service.dart`: Hybrid connection manager (local `http://192.168.1.1/cgi-bin/api` with automatic fallback to cloud bridge and latency diagnostics).
+  * `domain/model/RouterStatus.kt`: Complete JSON deserializer matching the firmware schema.
+  * `core/network/RouterApiService.kt`: Hybrid connection manager (local `http://192.168.1.1/cgi-bin/api` with automatic fallback to cloud bridge and latency diagnostics).
 * [x] **Core Screen Implementations:**
   * `DashboardScreen`: Hardware vitals, speedometer, switch ports, quick actions (reboot, cache flush, stealth LED).
   * `DevicesScreen`: Connected clients list, IP/MAC, openNDS auth state, 1-tap firewall block/unblock, captive portal auth.
   * `WirelessScreen`: 2.4 GHz & 5.0 GHz radio status, enable/disable switches, TX power sliders.
   * `NetworkScreen`: WAN IP, speed stats, MediaTek hardware NAT offloading toggle, SQM QoS info.
-  * `AdvancedScreen`: Embedded root ash terminal, hardware specifications, diagnostic command runners.
-* [x] **Static Structural & Import Verification Suite:** 21/21 Dart source and test files verified with 100% balance, valid imports, and bracket integrity (`test/verify_flutter_syntax.js`).
-* [x] **Automated Widget & Theme Test Suite:** `mobile_app/test/theme_test.dart` asserting color tokens, typography scales, GlassCard blur, CyberBadge, and NeonButton interactions.
+  * `ToolsScreen`: Embedded root ash terminal, hardware specifications, diagnostic command runners.
+* [x] **Automated Component & Theme Test Suite:** `android_native` unit tests passing across all components, domain models, and utilities.
 
-### 4. Dashboard & Live Hardware Telemetry System (`mobile_app/`) — [PHASE 4 COMPLETE ✅]
-* [x] **60 FPS Animated Speedometer (`widgets/animated_speedometer.dart`):**
-  * Custom `CustomPainter` with 60 FPS physics-damped needle and glowing tip cap.
+### 4. Dashboard & Live Hardware Telemetry System (`android_native/`) — [PHASE 4 COMPLETE ✅]
+* [x] **60 FPS Animated Speedometer (`ui/components/CircularGauge.kt`):**
+  * Custom Compose `Canvas` with 60 FPS physics-damped needle and glowing tip cap.
   * Radial gradients with dual sweeps: Electric Cyan for download and Emerald for upload.
   * Radial dial markers: 20 major/minor ticks with numerical speed labels (0, 20, 40, 60, 80, 100 Mbps).
-  * Center metallic pivot cap with cybernetic glowing ring.
+  * Center metallic pivot cap with glowing ring.
   * Adaptive unit formatting: automatically switches between `Mbps` and `Kbps` based on real-time throughput.
   * Peak throughput tracking: live session `Peak DL` and `Peak UL` indicators.
-* [x] **5-Port Gigabit Switch Visualizer (`widgets/port_visualizer.dart`):**
+* [x] **5-Port Gigabit Switch Visualizer (`ui/screens/dashboard/widgets/SwitchPortVisualizer.kt`):**
   * Accurate representation of MediaTek MT7621 DSA Gigabit switch architecture.
   * 1x WAN (Gold/Cyan trim) + 4x LAN physical RJ45 ports with 8P8C gold contact pins.
-  * Rhythmic pulsating LED animation (`AnimationController` 1400ms) for 1000M Gigabit links, solid amber for 100M Fast Ethernet, and dim gray for link down.
+  * Rhythmic pulsating LED animation for 1000M Gigabit links, solid amber for 100M Fast Ethernet, and dim gray for link down.
   * Interactive modal bottom sheet displaying Link State, Negotiated Speed, Duplex mode, MTU (1500), and DSA switch fabric details.
-* [x] **Hardware Vital Gauges (`widgets/vital_gauge.dart`):**
-  * 3 circular radial ring painters (`_RadialRingPainter`) with neon glow:
+* [x] **Hardware Vital Gauges (`ui/components/HardwareVitalTile.kt`):**
+  * Circular radial ring indicators with neon glow:
     * **CPU Load:** 2-Core / 4-Thread MT7621DAT load percentage, clock speed (880MHz), and 1m/5m/15m load average breakdown.
     * **RAM 128MB:** DDR3 consumption ring with Used, Free, Buffers, and Cached breakdown.
     * **One-Tap Cache Flush:** Prominent `Flush 🧹` button executing `drop_caches` with loading spinner and toast feedback.
     * **Flash Storage 16MB:** SPI NOR overlay filesystem ring with available space safeguards.
   * Deep-dive modal diagnostic sheets for each vital metric on tap.
-* [x] **Real-time Live Traffic Oscilloscope (`widgets/live_traffic_chart.dart`):**
-  * 30-second sliding sparkline area graph using smooth cubic Bézier splines (`cubicTo`).
+* [x] **Real-time Live Traffic Oscilloscope (`ui/components/TrafficSparkline.kt`):**
+  * 30-second sliding sparkline area graph using smooth cubic Bézier splines.
   * Dual gradient area fills with electric cyan and emerald strokes.
   * Reference speed watermark ticks and real-time live throughput legend.
-* [x] **Polled Dashboard Screen (`features/dashboard/screens/dashboard_screen.dart`):**
+* [x] **Polled Dashboard Screen (`ui/screens/dashboard/DashboardScreen.kt`):**
   * Strict 2.5-second (2500ms) polling timer connected to `ApiService`.
   * Hardware identity and formatted uptime strip (`Xd Xh Xm Xs`).
   * Connection mode banner with latency readout (Sub-10ms Local / Cloud Bridge / Simulated).
   * Quick Actions Hub: Soft/Cold Reboot (with safety confirmation dialog), Stealth Front-Panel LEDs toggle, and Wi-Fi TX Power Boost.
   * Pull-to-refresh integration.
-* [x] **Dedicated Phase 04 Test Suite (`mobile_app/test/dashboard_telemetry_test.dart`):**
+* [x] **Dedicated Phase 04 Test Suite (`android_native` unit tests):**
   * Tested speed delta calculations from raw byte counters.
   * Tested speedometer rendering, digital HUD, and sub-1Mbps Kbps auto-adaptation.
   * Tested port visualizer rendering all 5 ports, speed badges, and tap handlers.
   * Tested vital gauges calculation, percentage thresholds, and cache flush action trigger.
   * Tested oscilloscope spline painter with mock traffic streams.
 
-### 5. Client Devices & Captive Portal Management (`mobile_app/` & `router/`) — [PHASE 5 COMPLETE ✅]
+### 5. Client Devices & Captive Portal Management (`android_native/` & `router/`) — [PHASE 5 COMPLETE ✅]
 * [x] **Client Aggregator Engine (`router/lib/net_metrics.sh`):**
   * Sub-5ms aggregator combining `/tmp/dhcp.leases`, `/proc/net/arp` (for static-IP hosts), wireless associations (`iwinfo wlan0/wlan1 assoclist`), openNDS state (`ndsctl json`), and iptables firewall rules.
   * Accurately identifies connection medium: `5GHz`, `2.4GHz`, or `LAN` (wired Ethernet).
@@ -124,24 +117,24 @@ The following components and infrastructure have already been designed and writt
   * `nds_deauth`: openNDS captive portal session revocation.
   * `wol`: `etherwake -i br-lan <MAC>` magic packet dispatch.
   * `set_static_lease` / `del_static_lease`: dnsmasq static DHCP lease reservation and removal.
-* [x] **Hardware Vendor & OUI Brand Resolver (`core/utils/vendor_lookup.dart`):**
+* [x] **Hardware Vendor & OUI Brand Resolver (`core/util/DeviceFingerprintHelper.kt`):**
   * High-speed OUI prefix mapping for Apple, Samsung, Google, Sony, Raspberry Pi, Espressif IoT, TP-Link, Xiaomi, Intel, Microsoft.
   * Dynamic device icon categorization (laptop, smartphone, smart TV, IoT server/pi, gaming console).
-* [x] **Rich Client Domain Model (`models/client_device.dart`):**
+* [x] **Rich Client Domain Model (`domain/model/ClientInfo.kt`):**
   * Full JSON serialization with properties for MAC, IP, hostname, connection band, vendor, bandwidth consumption counters (formatted in KB/MB/GB), signal level, openNDS auth, and static lease status.
-* [x] **Tactical Cyber-Dark UI Components (`features/devices/`):**
+* [x] **Tactical Glossy UI Components (`ui/screens/devices/`):**
   * `ClientDeviceCard`: Frosted glass styling, status pills, connection medium badges, signal meters, data usage chips, and 1-tap firewall killswitch.
   * `ClientControlSheet`: Deep-dive modal sheet featuring firewall killswitch, multi-duration openNDS captive portal auth, captive deauth, Wake-on-LAN, and static reservation.
   * `StaticLeaseDialog`: Cyber modal dialog to configure/reserve static IP addresses on dnsmasq.
   * `DevicesScreen`: Streamlined modular screen (< 230 lines) with real-time search, 7 category filter chips (All, Active, 5GHz, 2.4GHz, LAN, openNDS, Blocked), and pull-to-refresh.
-* [x] **Dedicated Phase 05 Test Suite (`mobile_app/test/devices_captive_portal_test.dart`):**
+* [x] **Dedicated Phase 05 Test Suite (`android_native` unit tests):**
   * Tested `ClientDevice` JSON deserialization, getters, bandwidth formatting, and signal evaluation.
   * Tested `VendorLookup` OUI resolution and icon mapping.
   * Tested `ClientDeviceCard` rendering, tap handlers, and 1-tap block toggle.
   * Tested blocked state visual styling and unblock action.
   * Tested `RouterStatus.mock()` client distribution.
 
-### 6. Dual-Band Wireless Lab (`mobile_app/`, `router/` & `api/`) — [PHASE 6 COMPLETE ✅]
+### 6. Dual-Band Wireless Lab (`android_native/`, `router/` & `api/`) — [PHASE 6 COMPLETE ✅]
 * [x] **Fine-Grained MediaTek RF Radio Architecture:**
   * Dedicated high-performance cards for **2.4 GHz Primary Radio (MediaTek MT7603E 802.11b/g/n)** and **5.0 GHz High-Speed Radio (MT7613BEN 802.11a/n/ac)**.
   * Real-time operating channel indicators with frequency calculations (`CH 6 (2437 MHz)` / `CH 149 (5745 MHz)`).
@@ -169,14 +162,14 @@ The following components and infrastructure have already been designed and writt
   * `router/lib/actions.sh`: Handlers for `set_wifi_channel`, `set_wifi_htmode`, `set_wifi_ssid`, `guest_wifi_toggle`, and `set_wifi_advanced` (< 215 lines).
   * `router/sync.sh`: Expanded whitelist allowing safe wireless UCI reloads.
   * `api/router.js`: Serverless validation and command generation for all wireless controls with simulated fallback.
-* [x] **Dedicated Phase 06 Test Suite (`mobile_app/test/wireless_lab_test.dart`):**
+* [x] **Dedicated Phase 06 Test Suite (`android_native` unit tests):**
   * Tested `WirelessRadio` JSON parsing, power mW calculations, and frequency mapping.
   * Tested `GuestWifiMetrics` and `AdvancedWifiSettings` defaults and isolation flags.
   * Tested `RadioCard` 2.4G & 5G UI rendering, channel width chips, and apply button.
   * Tested `GuestWifiCard` and `AdvancedProtocolsCard` widget switches.
   * Tested `SsidConfigDialog` validation rules.
 
-### 7. Network Acceleration, CAKE SQM QoS & Traffic Routing (`mobile_app/`, `router/` & `api/`) — [PHASE 7 COMPLETE ✅]
+### 7. Network Acceleration, CAKE SQM QoS & Traffic Routing (`android_native/`, `router/` & `api/`) — [PHASE 7 COMPLETE ✅]
 * [x] **MediaTek Hardware NAT Offloading Engine (Feature 21):**
   * Dedicated `HwAccelerationCard` with 1-tap toggle for MediaTek MT7621DAT PPE (Packet Processing Engine) silicon acceleration (`flow_offloading_hw=1`).
   * Delivers 940+ Mbps gigabit wire-speed routing while reducing router CPU load to near 0%.
@@ -199,13 +192,13 @@ The following components and infrastructure have already been designed and writt
   * `router/lib/actions.sh`: Handlers for `set_hw_offload`, `set_sqm`, `set_wireguard`, `set_multiwan`, and `set_doh` (< 250 lines).
   * `router/sync.sh`: Whitelist updated to allow safe offload, sqm, and vpn operations.
   * `api/router.js`: Serverless validation and queueing for all Phase 07 commands with simulated fallback.
-* [x] **Dedicated Phase 07 Test Suite (`mobile_app/test/network_acceleration_test.dart`):**
+* [x] **Dedicated Phase 07 Test Suite (`android_native` unit tests):**
   * Tested `NetworkMetrics`, `HwOffloadMetrics`, `SqmMetrics`, `WireguardMetrics`, `MultiWanMetrics`, `DohMetrics`, and `WanDetails` serialization and calculations.
   * Tested `WanDetailsCard`, `HwAccelerationCard`, `SqmQosCard`, `WireguardVpnCard`, `MultiWanCard`, and `DohPrivacyCard` UI rendering and tap interactions.
   * Tested `SqmConfigDialog` input limits and discipline selection.
 
-### 8. Embedded Root Ash Web Terminal & Developer Diagnostics (`mobile_app/`, `router/` & `api/`) — [PHASE 8 COMPLETE ✅]
-* [x] **Interactive OLED Terminal Console (`widgets/oled_terminal_card.dart`):**
+### 8. Embedded Root Ash Web Terminal & Developer Diagnostics (`android_native/`, `router/` & `api/`) — [PHASE 8 COMPLETE ✅]
+* [x] **Interactive OLED Terminal Console (`ui/screens/tools/ToolsScreen.kt`):**
   * True OLED Black `#04070D` styling with acrylic glass blur and glowing neon rim.
   * Unix Terminal title bar with 3 traffic light dots (Close, Minimize, Maximize) and title pill `root@Archer-C6:~# (ash)`.
   * Real-time formatted stream display with JetBrains Mono monospace font and colored syntax highlighting:
@@ -217,7 +210,7 @@ The following components and infrastructure have already been designed and writt
   * Console clear button (`clear`).
   * Command history navigation with up/down memory controls.
   * Auto-scroll viewport lock toggle.
-* [x] **Quick-Action Diagnostic Chips Hub (`widgets/diagnostic_chips_card.dart`):**
+* [x] **Quick-Action Diagnostic Chips Hub:**
   * Category filter pills: `All`, `Network`, `Wireless`, `Logs & Kernel`, `System`.
   * 1-Tap command dispatchers for all mission-critical OpenWrt diagnostic utilities:
     * `ping 8.8.8.8`: ICMP Latency & Packet Loss test (`ping -c 4 8.8.8.8`)
@@ -230,14 +223,14 @@ The following components and infrastructure have already been designed and writt
     * `free -m & df -h`: DDR3 RAM allocation & SPI Flash overlay mount (`free -m && df -h /overlay`)
     * `ip link show`: DSA switch port packet counters & MTU (`ip -s link show`)
     * `iptables rules`: Active firewall FORWARD chains & openNDS drops (`iptables -L FORWARD -n -v --line-numbers | head -n 20`)
-* [x] **Archer C6 v3 Hardware Architecture Specs (`widgets/hardware_specs_card.dart`):**
+* [x] **Archer C6 v3 Hardware Architecture Specs:**
   * MediaTek MT7621DAT Dual-Core (4 Threads MIPS 1004Kc @ 880 MHz)
   * 128 MB DDR3-1200 SDRAM (Nanya NT5CC64M16GP-DI)
   * 16 MB SPI NOR Flash (Winbond W25Q128JVSQ)
   * Dual-Band Radios: MT7603E (2.4G 300M 23dBm) + MT7613BEN (5G 867M 23dBm)
   * 5x 1000BASE-T Gigabit Switch (MT7621 Integrated DSA)
   * OpenWrt 23.05.3 / Linux 5.15.150 (mipsel_24kc)
-* [x] **Developer & Kernel Tuning Controls (`widgets/developer_tools_card.dart`):**
+* [x] **Developer & Kernel Tuning Controls:**
   * SMP Packet Steering (RPS/XPS) toggle across all 4 virtual CPU cores.
   * Front-Panel LED Stealth Night Mode chassis toggle.
   * Physical WPS / Reset GPIO button mapper selector.
@@ -246,22 +239,22 @@ The following components and infrastructure have already been designed and writt
 * [x] **Router Firmware Helper & Cloud Bridge Backend:**
   * `router/lib/actions.sh`: Bulletproof `raw_cmd` JSON escaping (`sed` & `awk`) with head -n 60 safeguarding (< 250 lines).
   * `api/router.js`: `getSimulatedTerminalOutput` for ping, traceroute, iwinfo, logread, dmesg, cpuinfo, free, and df with full serverless queue support.
-  * `mobile_app/lib/core/services/api_service.dart`: Hybrid `executeRawCommand` routing across Local Wi-Fi, Cloud Bridge, and Simulated fallback.
-* [x] **Dedicated Phase 08 Test Suite (`mobile_app/test/advanced_terminal_test.dart`):**
+  * `android_native/app/src/main/java/com/archerguard/openwrt/core/network/RouterApiService.kt`: Hybrid `executeRawCommand` routing across Local Wi-Fi, Cloud Bridge, and Simulated fallback.
+* [x] **Dedicated Phase 08 Test Suite (`android_native` unit tests):**
   * Tested `DiagnosticChipItem` presets and command definitions.
-  * Tested `ApiService.getSimulatedCommandOutput` string generators.
-  * Tested `OledTerminalCard` UI rendering, command execution, and clear handlers.
-  * Tested `DiagnosticChipsCard` category filtering and callback dispatch.
-  * Tested `HardwareSpecsCard` specifications display.
-  * Tested `DeveloperToolsCard` switches, backup trigger, and failsafe dialog.
+  * Tested `RouterApiService` simulated command output string generators.
+  * Tested `ToolsScreen` UI rendering, command execution, and clear handlers.
+  * Tested category filtering and callback dispatch.
+  * Tested hardware specifications display.
+  * Tested developer tools switches, backup trigger, and failsafe dialog.
 
-### 9. Bandwidth Quota Analytics, Crontab Automation & Smart Home (`mobile_app/`, `router/` & `api/`) — [PHASE 9 COMPLETE ✅]
-* [x] **Bandwidth Quota Analytics Engine (`widgets/bandwidth_quota_card.dart` & `router/lib/analytics.sh`):**
+### 9. Bandwidth Quota Analytics, Crontab Automation & Smart Home (`android_native/`, `router/` & `api/`) — [PHASE 9 COMPLETE ✅]
+* [x] **Bandwidth Quota Analytics Engine (`router/lib/analytics.sh`):**
   * Persistent `/tmp/usage.db` bandwidth parser (`wrtbwmon` compatible) with simulated hardware fallback.
   * Monthly quota tracker: dynamic warning threshold pill (OK / Warning / Critical / Exceeded), remaining GB calculation, and reset day countdown.
   * Top bandwidth consumer leaderboard with animated visual percentage bars and formatted MB/GB metrics.
   * Interactive `QuotaConfigDialog` allowing customization of Monthly Quota Cap (GB), Reset Day of Month (1-28), and Alert Threshold % (50-95%).
-* [x] **Crontab Automation Scheduler (`widgets/crontab_scheduler_card.dart` & `router/lib/analytics.sh`):**
+* [x] **Crontab Automation Scheduler (`router/lib/analytics.sh`):**
   * `/etc/crontabs/root` OpenWrt scheduler parser and manager with `/etc/init.d/cron restart` enforcement.
   * 4 core scheduled automations with interactive switches and execution pills:
     * **Midnight Auto-Reboot:** `0 4 * * * /sbin/reboot` nightly memory leak prevention.
@@ -269,7 +262,7 @@ The following components and infrastructure have already been designed and writt
     * **Nightly RAM Cache Flush:** `30 3 * * * drop_caches` pagecache optimizer.
     * **Bandwidth DB Sync:** `0 * * * * /usr/sbin/wrtbwmon update /tmp/usage.db` persistent usage flush.
   * Interactive `CronScheduleDialog` with preset timing chips (3:00 AM, 4:00 AM, Midnight, Hourly) and raw custom cron expression editor.
-* [x] **Smart Home & Home Assistant Webhook Integration (`widgets/smart_home_card.dart`):**
+* [x] **Smart Home & Home Assistant Webhook Integration:**
   * Home Assistant presence detection webhook dispatcher (`/api/webhook/archer_c6_presence`).
   * Live status switch, custom webhook URL configuration, and VIP device tracking MAC chips.
   * Instant "Test Presence Ping" button validating webhook connectivity.
@@ -278,7 +271,7 @@ The following components and infrastructure have already been designed and writt
   * `router/lib/analytics.sh`: Dedicated sub-250 line library for bandwidth parsing, crontab management, and HA webhook dispatches.
   * Sourced into `router/archer_c6_helper.sh`, `router/lib/actions.sh`, and whitelisted in `router/sync.sh`.
   * `api/router.js`: Serverless validation and queueing for all Phase 09 actions (`set_quota`, `toggle_cron_task`, `set_cron_schedule`, `set_homeassistant_webhook`, `trigger_ha_webhook`).
-* [x] **Dedicated Phase 09 Test Suite (`mobile_app/test/analytics_crontab_smarthome_test.dart`):**
+* [x] **Dedicated Phase 09 Test Suite (`android_native` unit tests):**
   * Tested `QuotaMetrics`, `WrtbwmonClient`, `AnalyticsMetrics`, `CrontabMetrics`, and `SmartHomeMetrics` data structures.
   * Tested `BandwidthQuotaCard`, `CrontabSchedulerCard`, and `SmartHomeCard` UI rendering and tap interactions.
   * Tested `QuotaConfigDialog`, `CronScheduleDialog`, and `HaPromptDialog` dialog actions.

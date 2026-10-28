@@ -48,25 +48,19 @@ The color system is optimized for OLED screens, providing maximum contrast while
 
 ### 2.2 Gradients & Glow Accents
 
-```dart
+```kotlin
 // Core Gradient Tokens
-static const LinearGradient cyanGlowGradient = LinearGradient(
-  colors: [Color(0xFF00F2FE), Color(0xFF4FACFE)],
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-);
+val CyanGlowGradient = Brush.linearGradient(
+  colors = listOf(Color(0xFF00F2FE), Color(0xFF4FACFE))
+)
 
-static const LinearGradient emeraldGlowGradient = LinearGradient(
-  colors: [Color(0xFF00E676), Color(0xFF1DE9B6)],
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-);
+val EmeraldGlowGradient = Brush.linearGradient(
+  colors = listOf(Color(0xFF00E676), Color(0xFF1DE9B6))
+)
 
-static const LinearGradient crimsonGlowGradient = LinearGradient(
-  colors: [Color(0xFFFF1744), Color(0xFFFF5252)],
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-);
+val CrimsonGlowGradient = Brush.linearGradient(
+  colors = listOf(Color(0xFFFF1744), Color(0xFFFF5252))
+)
 ```
 
 ---
@@ -90,20 +84,20 @@ Terminal:     JetBrains Mono   • 11pt / Regular (400) • Line Height 1.35
 
 All UI components adhere to a strict modular design pattern to ensure consistent spacing, border radius, and elevation across the entire app.
 
-### 4.1 GlassCard (`lib/widgets/glass_card.dart`)
+### 4.1 GlossyCard (`android_native/app/src/main/java/com/archerguard/openwrt/ui/components/GlossyCard.kt`)
 A frosted acrylic container with dual-layer blur, subtle 1px border gradient, and optional glow shadow:
-* **Border Radius:** `16.0` or `20.0`
-* **Internal Padding:** `16.0`
-* **Border:** `Border.all(color: Colors.white.withOpacity(0.08), width: 1.0)`
-* **Backdrop Filter:** `ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0)`
+* **Border Radius:** `16.dp` or `20.dp`
+* **Internal Padding:** `16.dp`
+* **Border:** 1.dp border with `GlossyColors.GlassBorderLight.copy(alpha = 0.30f)`
+* **Backdrop Styling:** Elevated card surface with subtle alpha blur
 
-### 4.2 Animated Radial Speedometer (`lib/widgets/animated_speedometer.dart`)
+### 4.2 Animated Radial Speedometer (`android_native/app/src/main/java/com/archerguard/openwrt/ui/components/CircularGauge.kt`)
 * **Framework:** Jetpack Compose `Canvas` with 60 FPS physics-based needle damping.
 * **Dial Range:** 0 to 100+ Mbps dynamic logarithmic scaling.
 * **Glow Layer:** Radial gradient path with blurred cyan/emerald neon arcs.
 * **Center Display:** Instantaneous Download / Upload throughput formatted to Mbps/Kbps with peak speed indicators.
 
-### 4.3 Physical RJ45 Ethernet Switch Visualizer (`lib/widgets/port_visualizer.dart`)
+### 4.3 Physical RJ45 Ethernet Switch Visualizer (`android_native/app/src/main/java/com/archerguard/openwrt/ui/screens/dashboard/widgets/SwitchPortVisualizer.kt`)
 A physical representation of the TP-Link Archer C6 v3's 5 Gigabit Ethernet ports (MediaTek DSA switch architecture):
 * **Port Layout:** 1x WAN (Gold accent) + 4x LAN ports (Cyan accents).
 * **Live LED Indicators:**
@@ -112,7 +106,7 @@ A physical representation of the TP-Link Archer C6 v3's 5 Gigabit Ethernet ports
   * ⚫ **Disconnected / Link Down:** Dark Slate grey.
 * **Interactivity:** Tapping any port reveals instantaneous packet counters, full/half duplex state, and software shutdown toggle.
 
-### 4.4 Hardware Vital Gauge (`lib/widgets/vital_gauge.dart`)
+### 4.4 Hardware Vital Gauge (`android_native/app/src/main/java/com/archerguard/openwrt/ui/components/HardwareVitalTile.kt`)
 * **Radial Ring:** Visual percentage representation of 4-Thread CPU load, 128MB RAM consumption, and 16MB Flash storage.
 * **Interactive Action:** Tap on RAM gauge triggers a one-tap kernel cache flush (`drop_caches`).
 
@@ -206,7 +200,7 @@ http://192.168.1.1/cgi-bin/api               https://wifi-handler.vercel.app/api
 
 ## 9. Code Health, Modularity & DRY Architecture (Mandatory Core Rules)
 
-Every single file and component in this repository (Dart, POSIX Shell, Node.js) must strictly follow two non-negotiable architectural mandates:
+Every single file and component in this repository (Kotlin, POSIX Shell, Node.js) must strictly follow two non-negotiable architectural mandates:
 
 ### 📏 Mandate 1: Strict 250-Line Limit (`MAX_FILE_LINES <= 250`)
 1. **Hard Upper Bound:** No code file may exceed **250 total lines** of code.

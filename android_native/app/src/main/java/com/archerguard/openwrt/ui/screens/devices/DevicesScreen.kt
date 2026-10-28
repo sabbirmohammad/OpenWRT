@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,11 +49,14 @@ import com.archerguard.openwrt.domain.model.ClientInfo
 import com.archerguard.openwrt.ui.components.GlossyButton
 import com.archerguard.openwrt.ui.components.GlossyCard
 import com.archerguard.openwrt.ui.components.GlossyInput
+import com.archerguard.openwrt.ui.screens.devices.topology.RadarTopologyView
 import com.archerguard.openwrt.ui.theme.GlossyColors
 
 /**
  * Modern Connected Devices / Clients Management Screen.
  * Features:
+ * - Dual-View Mode: Traditional Card List vs Interactive Radar / Network Topology
+ * - Persistent search query and filter criteria across view switches
  * - Smart Brand/Device Fingerprinting (Apple, Samsung, Android, Windows, Smart TV, Gaming, IoT)
  * - Wi-Fi RSSI Signal Quality Meter (-dBm with color grading)
  * - 1-Tap Parental Internet Pause & Resume
@@ -67,77 +71,81 @@ fun DevicesScreen(
     onRenameClient: (mac: String, newName: String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
+    var viewMode by rememberSaveable { mutableStateOf(DeviceViewMode.LIST) }
     var selectedClient by remember { mutableStateOf<ClientInfo?>(null) }
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("All") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedFilter by rememberSaveable { mutableStateOf("All") }
 
     val filterOptions = listOf("All", "Apple", "Android", "5.0 GHz", "2.4 GHz", "LAN", "Guest", "Paused")
 
-    val filteredClients = clients.filter { client ->
-        val matchesSearch = searchQuery.isBlank() ||
-                client.displayName.contains(searchQuery, ignoreCase = true) ||
-                client.ip.contains(searchQuery, ignoreCase = true) ||
-                client.mac.contains(searchQuery, ignoreCase = true)
+    // Filtered clients list is computed once and shared between BOTH views
+    val filteredClients = remember(clients, searchQuery, selectedFilter) {
+        clients.filter { client ->
+            val matchesSearch = searchQuery.isBlank() ||
+                    client.displayName.contains(searchQuery, ignoreCase = true) ||
+                    client.ip.contains(searchQuery, ignoreCase = true) ||
+                    client.mac.contains(searchQuery, ignoreCase = true)
 
-        val deviceType = DeviceFingerprintHelper.resolveDeviceType(client)
+            val deviceType = DeviceFingerprintHelper.resolveDeviceType(client)
 
-        val matchesFilter = when (selectedFilter) {
-            "Apple" -> deviceType == DeviceType.APPLE || deviceType == DeviceType.APPLE_MAC
-            "Android" -> deviceType == DeviceType.ANDROID || deviceType == DeviceType.SAMSUNG
-            "5.0 GHz" -> client.ssidName.contains("5", ignoreCase = true) || client.connectionType.contains("5", ignoreCase = true)
-            "2.4 GHz" -> client.ssidName.contains("2.4", ignoreCase = true) || client.connectionType.contains("2.4", ignoreCase = true)
-            "LAN" -> client.connectionType.equals("LAN", ignoreCase = true) || deviceType == DeviceType.WIRED_LAN
-            "Guest" -> client.isIsolated
-            "Paused" -> client.blocked
-            else -> true
+            val matchesFilter = when (selectedFilter) {
+                "Apple" -> deviceType == DeviceType.APPLE || deviceType == DeviceType.APPLE_MAC
+                "Android" -> deviceType == DeviceType.ANDROID || deviceType == DeviceType.SAMSUNG
+                "5.0 GHz" -> client.ssidName.contains("5", ignoreCase = true) || client.connectionType.contains("5", ignoreCase = true)
+                "2.4 GHz" -> client.ssidName.contains("2.4", ignoreCase = true) || client.connectionType.contains("2.4", ignoreCase = true)
+                "LAN" -> client.connectionType.equals("LAN", ignoreCase = true) || deviceType == DeviceType.WIRED_LAN
+                "Guest" -> client.isIsolated
+                "Paused" -> client.blocked
+                else -> true
+            }
+            matchesSearch && matchesFilter
         }
-        matchesSearch && matchesFilter
     }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(GlossyColors.BackgroundPrimary)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
+        // --- Persistent Header Section (Shared across both modes) ---
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f, fill = false)) {
                     Text(
                         text = "Connected Clients",
                         color = GlossyColors.TextPrimary,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.4).sp
+                        letterSpacing = (-0.4).sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = "Real-time discovery & access controls",
-                        color = GlossyColors.TextSecondary,
-                        fontSize = 12.sp
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(GlossyColors.PrimaryBlue.copy(alpha = 0.2f))
-                        .border(1.dp, GlossyColors.LightBlue.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "${filteredClients.size} / ${clients.size} Online",
                         color = GlossyColors.LightBlue,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Dual-View Mode Switcher
+                ViewModeToggle(
+                    currentMode = viewMode,
+                    onModeSelected = { viewMode = it }
+                )
             }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             // Search Bar
@@ -179,48 +187,81 @@ fun DevicesScreen(
             }
         }
 
-        if (filteredClients.isEmpty()) {
-            item {
-                GlossyCard {
-                    Column(
+        // --- Content Viewport (List vs Topology) ---
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            when (viewMode) {
+                DeviceViewMode.LIST -> {
+                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Devices,
-                            contentDescription = null,
-                            tint = GlossyColors.TextMuted,
-                            modifier = Modifier.size(44.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = if (searchQuery.isNotEmpty()) "No devices matching \"$searchQuery\""
-                            else "No devices found in this filter",
-                            color = GlossyColors.TextSecondary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                        item {
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+
+                        if (filteredClients.isEmpty()) {
+                            item {
+                                GlossyCard {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Devices,
+                                            contentDescription = null,
+                                            tint = GlossyColors.TextMuted,
+                                            modifier = Modifier.size(44.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Text(
+                                            text = if (searchQuery.isNotEmpty()) "No devices matching \"$searchQuery\""
+                                            else "No devices found in this filter",
+                                            color = GlossyColors.TextSecondary,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            items(filteredClients, key = { it.mac }) { client ->
+                                DeviceCard(
+                                    client = client,
+                                    onKick = { onKickClient(client.mac) },
+                                    onToggleBlock = { onBlockClient(client.mac) },
+                                    onClick = { selectedClient = client }
+                                )
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
-            }
-        } else {
-            items(filteredClients, key = { it.mac }) { client ->
-                DeviceCard(
-                    client = client,
-                    onKick = { onKickClient(client.mac) },
-                    onToggleBlock = { onBlockClient(client.mac) },
-                    onClick = { selectedClient = client }
-                )
-            }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
+                DeviceViewMode.TOPOLOGY -> {
+                    RadarTopologyView(
+                        allClients = clients,
+                        filteredClients = filteredClients,
+                        onSelectClient = { selectedClient = it },
+                        selectedClient = selectedClient,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
     }
 
+    // Modal Sheet for selected device details & actions
     selectedClient?.let { client ->
         DeviceDetailsSheet(
             client = client,
