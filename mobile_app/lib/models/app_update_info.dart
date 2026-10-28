@@ -59,6 +59,10 @@ class AppUpdateInfo {
       }
     }
 
+    if (apkUrl == null && tagName.isNotEmpty) {
+      apkUrl = 'https://github.com/sabbirmohammad/OpenWRT/releases/download/$tagName/ArcherGuard-$tagName.apk';
+    }
+
     // Version comparison
     final cleanedLatest = _cleanVersion(tagName);
     final hasUpdate = isNewerVersion(

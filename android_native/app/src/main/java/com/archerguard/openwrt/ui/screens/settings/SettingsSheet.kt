@@ -280,13 +280,18 @@ fun SettingsSheet(
                 onClick = {
                     scope.launch {
                         isCheckingUpdate = true
+                        val currentVersion = try {
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.2"
+                        } catch (e: Exception) {
+                            "1.2.2"
+                        }
                         val updater = com.archerguard.openwrt.core.network.GithubUpdateService()
-                        val update = updater.checkForUpdates()
+                        val update = updater.checkForUpdates(currentVersion = currentVersion)
                         isCheckingUpdate = false
                         if (update != null && update.hasUpdate) {
                             availableUpdate = update
                         } else {
-                            com.archerguard.openwrt.core.util.AppFeedback.showToast(context, "App is up to date (v1.0.0)")
+                            com.archerguard.openwrt.core.util.AppFeedback.showToast(context, "App is up to date (v$currentVersion)")
                         }
                     }
                 },
