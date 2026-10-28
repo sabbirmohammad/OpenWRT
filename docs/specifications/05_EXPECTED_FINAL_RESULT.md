@@ -108,7 +108,7 @@ The final application must satisfy strict non-functional performance benchmarks:
 | :--- | :--- | :--- |
 | **Local Network Latency** | **< 10 ms** | Direct HTTP connection to `http://192.168.1.1/cgi-bin/api` |
 | **WireGuard Remote Latency**| **< 30 ms** | Direct ChaCha20-Poly1305 peer tunnel to `http://10.14.0.1/cgi-bin/api` |
-| **UI Frame Rate** | **Steady 60 FPS** | Flutter DevTools Performance Overlay (no jank) |
+| **UI Frame Rate** | **Steady 60 FPS** | Android Studio Profiler / Compose JankStats (no jank) |
 | **Mobile App RAM Footprint** | **< 35 MB** | Android Studio Profiler memory inspection |
 | **Router Helper Memory** | **< 300 KB** | Pure POSIX ash shell execution, zero daemon bloat |
 | **Router CPU Overhead** | **< 2%** | Continuously polling every 2.5 seconds |
@@ -119,7 +119,7 @@ The final application must satisfy strict non-functional performance benchmarks:
 
 ## 📦 Final Release Deliverables & Artifacts
 
-1. **Production Android APK (`mobile_app/build/app/outputs/flutter-apk/app-release.apk`):**
+1. **Production Android APK (`android_native/app/build/outputs/apk/release/app-release.apk`):**
    * Pre-compiled, signed Android release binary ready for side-loading or internal distribution.
 2. **Router Firmware Helper Script (`router/archer_c6_helper.sh`):**
    * Zero-bloat (~14 KB) POSIX ash executable to be installed at `/www/cgi-bin/api` on the router.
@@ -140,7 +140,7 @@ The final application must satisfy strict non-functional performance benchmarks:
 
 - [x] All 5 markdown specification documents created, synchronized, and verified in the workspace root.
 - [x] Router helper script tested on OpenWrt and verified to output valid JSON within 10ms (< 250 lines per module).
-- [x] Flutter mobile app structural AST & syntax audits passing 100% across all 54 Dart files.
+- [x] Native Kotlin Android app compiles cleanly and passes all unit tests.
 - [x] 60 FPS animated speedometer and 5-port RJ45 switch visualizer render smoothly.
 - [x] Client killswitch (`block_client` / `unblock_client`) verified against OpenWrt firewall.
 - [x] Seamless connection failover between Local Wi-Fi and WireGuard VPN tunnel when remote.

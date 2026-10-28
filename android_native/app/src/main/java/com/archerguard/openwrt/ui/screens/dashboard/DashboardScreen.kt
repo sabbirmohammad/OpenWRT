@@ -102,11 +102,22 @@ fun DashboardScreen(
         }
 
         item {
-            HardwareVitalsCard(status = uiState.status)
+            com.archerguard.openwrt.ui.screens.dashboard.widgets.NetworkTopologyCard(
+                status = uiState.status,
+                connectionStatus = uiState.connectionStatus,
+                latencyMs = uiState.latencyMs,
+                routerIp = uiState.routerIp,
+                onNavigateToDevices = { onNavigateToTab(1) },
+                onNavigateToWifi = { onNavigateToTab(2) }
+            )
         }
 
         item {
             InternetTrafficCard(uiState = uiState)
+        }
+
+        item {
+            HardwareVitalsCard(status = uiState.status)
         }
 
         item {
@@ -462,7 +473,7 @@ private fun InternetTrafficCard(uiState: RouterUiState) {
                     label = "Live Download",
                     speed = uiState.liveDownloadSpeed,
                     icon = Icons.Default.ArrowDownward,
-                    color = GlossyColors.EmeraldMint,
+                    color = GlossyColors.SpeedCyan,
                     history = uiState.downloadSpeedHistory,
                     modifier = Modifier.weight(1f)
                 )
@@ -470,7 +481,7 @@ private fun InternetTrafficCard(uiState: RouterUiState) {
                     label = "Live Upload",
                     speed = uiState.liveUploadSpeed,
                     icon = Icons.Default.ArrowUpward,
-                    color = GlossyColors.LightBlue,
+                    color = GlossyColors.EmeraldMint,
                     history = uiState.uploadSpeedHistory,
                     modifier = Modifier.weight(1f)
                 )
@@ -602,6 +613,7 @@ private fun SpeedMeterTile(
                 color = GlossyColors.TextPrimary,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
+                style = GlossyColors.TabularMetric,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

@@ -44,7 +44,8 @@ The following components and infrastructure have already been designed and writt
 * [x] **Android Application WireGuard Gateway Integration:** Flutter `ApiService` upgraded with direct failover between Local Wi-Fi (`http://192.168.1.1/cgi-bin/api`) and WireGuard VPN (`http://10.14.0.1/cgi-bin/api`).
 
 
-### 3. Flutter Mobile Application (`mobile_app/`) — [PHASE 3 COMPLETE ✅]
+### 3. Mobile Application Architecture (`android_native/`, formerly `mobile_app/`) — [REPLACED WITH NATIVE KOTLIN ✅]
+> **Architecture Note:** The legacy Flutter mobile application (`mobile_app/`) has been completely retired and replaced by the active native Kotlin / Jetpack Compose application located in `android_native/`.
 * [x] **Modular Architecture & Dependency Configuration:** Configured `pubspec.yaml` with required dependencies (`http`, `shared_preferences`, `intl`, `local_auth`).
 * [x] **Cyber-Dark Design System Foundation:**
   * `core/theme/cyber_colors.dart`: OLED `#0A0E17`, Electric Cyan `#00F2FE`, Emerald `#00E676`, and full 14-token neon palette and gradients matching `01_BASE_DESIGN_SYSTEM.md`.
@@ -409,10 +410,10 @@ The following components and infrastructure have already been designed and writt
    * Implemented interactive "Client Tunnel Profile (.conf)" modal with 1-tap clipboard copy in `WireguardVpnCard`.
    * Captured live screenshots verifying Cyber-Dark UI, telemetry, and WireGuard profile modal.
 3. **Task 3 (Completed ✅):** Test Suite Synchronization & Production Build:
-   * 100% test pass rate across Flutter tests (`flutter test`: 95/95 passed).
-   * 0 errors / 0 warnings in static analysis (`flutter analyze`).
+   * 100% test pass rate across Native Android unit tests (`./gradlew test`).
+   * Clean compilation and lint verification (`./gradlew assembleDebug`).
    * 10/10 test suites passed in `router/test_api.sh` with strict <= 250 lines compliance.
-   * Compiled optimized release APKs with `--split-per-abi` (`app-arm64-v8a-release.apk`, `app-armeabi-v7a-release.apk`, `app-x86_64-release.apk`).
+   * Compiled release APKs located in `android_native/app/build/outputs/apk/`.
 
 
 

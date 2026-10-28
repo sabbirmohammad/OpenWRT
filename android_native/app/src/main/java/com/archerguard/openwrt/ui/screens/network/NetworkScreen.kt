@@ -47,6 +47,7 @@ fun NetworkScreen(
     onToggleHwOffload: (Boolean) -> Unit = {},
     onTuneSqm: (downloadKbit: Int, uploadKbit: Int) -> Unit = { _, _ -> },
     onSelectDns: (DnsPreset) -> Unit = {},
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showSqmTune by remember { mutableStateOf(false) }
@@ -59,15 +60,25 @@ fun NetworkScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Network & Routing",
-                color = GlossyColors.TextPrimary,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+        if (onBackClick != null) {
+            item {
+                com.archerguard.openwrt.ui.components.ArcherTopAppBar(
+                    title = "Network & QoS",
+                    subtitle = "CAKE SQM, DNS privacy & HW offload",
+                    onBackClick = onBackClick
+                )
+            }
+        } else {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Network & Routing",
+                    color = GlossyColors.TextPrimary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
 
         item {

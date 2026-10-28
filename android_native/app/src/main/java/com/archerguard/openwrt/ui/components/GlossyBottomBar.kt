@@ -26,15 +26,15 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.Hub
-import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -66,6 +66,18 @@ data class NavigationTabItem(
     val badgeCount: Int? = null
 )
 
+/**
+ * Modern Floating Curved Glass Dock (26dp radius) with specular top hairline gradient reflection,
+ * spring-based icon scale (1.12x), smooth tint interpolation, glowing cyan micro-indicator,
+ * and tactile haptic feedback on tab selection.
+ *
+ * 5 Core Tabs:
+ * 0: Dashboard
+ * 1: Devices (with dynamic connected client count badge)
+ * 2: Wireless
+ * 3: Security
+ * 4: Tools
+ */
 @Composable
 fun GlossyBottomBar(
     currentIndex: Int,
@@ -79,8 +91,8 @@ fun GlossyBottomBar(
         NavigationTabItem("Dashboard", Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
         NavigationTabItem("Devices", Icons.Filled.Devices, Icons.Outlined.Devices, if (clientCount > 0) clientCount else null),
         NavigationTabItem("Wireless", Icons.Filled.Wifi, Icons.Outlined.Wifi),
-        NavigationTabItem("Network", Icons.Filled.Hub, Icons.Outlined.Hub),
-        NavigationTabItem("Menu", Icons.Filled.Menu, Icons.Outlined.Menu)
+        NavigationTabItem("Security", Icons.Filled.Shield, Icons.Outlined.Shield),
+        NavigationTabItem("Tools", Icons.Filled.Build, Icons.Outlined.Build)
     )
 
     // Outer container honoring navigation bars inset with centered responsive width
@@ -96,7 +108,7 @@ fun GlossyBottomBar(
                 .fillMaxWidth()
                 .widthIn(max = 520.dp),
             shape = RoundedCornerShape(26.dp),
-            color = GlossyColors.BackgroundSecondary.copy(alpha = 0.92f),
+            color = GlossyColors.BackgroundSecondary.copy(alpha = 0.94f),
             border = BorderStroke(
                 width = 1.dp,
                 brush = Brush.verticalGradient(

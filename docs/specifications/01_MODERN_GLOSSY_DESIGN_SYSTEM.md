@@ -1,6 +1,6 @@
 # 💎 ArcherGuard — Modern Glossy Design System & Architecture
 
-> **Target Platform:** Android (Flutter 3.x+ / Dart 3.x+)  
+> **Target Platform:** Android (Native Kotlin / Jetpack Compose)  
 > **Target Hardware:** TP-Link Archer C6 v3 (MediaTek MT7621DAT, OpenWrt 21.02/22.03/23.05+)  
 > **Network Mode:** 100% Direct Local Connection (LAN / Wi-Fi, No Cloud/Internet Dependency)  
 > **Design Language:** Modern Glossy Glassmorphism & Frosted Acrylic (Non-Sci-Fi, Sleek, Executive)  

@@ -2,7 +2,7 @@
 
 > **Scope:** Full-cycle development of the ArcherGuard C6 Android application and OpenWrt router firmware engine.  
 > **Target Devices:** Android Smartphone & TP-Link Archer C6 v3 (OpenWrt 21.02/22.03/23.05+).  
-> **Development Language:** Flutter / Dart (Mobile App) + POSIX /bin/sh (Router Helper) + WireGuard VPN & Node.js (Captive Portal / Telegram).
+> **Development Language:** Native Kotlin / Jetpack Compose (Android App) + POSIX /bin/sh (Router Helper) + WireGuard VPN & Node.js (Captive Portal / Telegram).
 
 ---
 
@@ -14,7 +14,7 @@
  ├────────────────────────────────┬───────────────────────────────────────┤
  │ Phase 01: Firmware Engine API  │ Phase 06: Dual-Band Wireless Lab      │
  │ Phase 02: WireGuard VPN Remote │ Phase 07: Acceleration & CAKE SQM QoS │
- │ Phase 03: Flutter Architecture │ Phase 08: Root Terminal & Diagnostics │
+ │ Phase 03: Native Architecture  │ Phase 08: Root Terminal & Diagnostics │
  │ Phase 04: Dashboard & Telemetry│ Phase 09: Analytics, Quotas & Crontab │
  │ Phase 05: Devices & Captive    │ Phase 10: APK Build & Acceptance Test │
  └────────────────────────────────┴───────────────────────────────────────┘
@@ -40,7 +40,7 @@
 * **Goal:** Completely eliminate 3rd-party cloud dependencies (Vercel serverless / Upstash Redis queue) and provide direct, military-grade encrypted (ChaCha20-Poly1305) remote control over an OpenWrt WireGuard VPN tunnel.
 * **Key Tasks:**
   1. Author automated OpenWrt router setup script [`router/setup_wireguard.sh`](file:///Users/sabbir/Dev/wifi_handler/router/setup_wireguard.sh) to configure interface `wg0` (`10.14.0.1/24`), generate keypairs, setup firewall forwarding, and print terminal QR code via `qrencode`.
-  2. Implement direct WireGuard Gateway routing in Flutter `ApiService` (`http://10.14.0.1/cgi-bin/api`) with automatic fallback between Local Wi-Fi (`192.168.1.1`) and WireGuard VPN tunnel.
+  2. Implement direct WireGuard Gateway routing in Android Native client (`http://10.14.0.1/cgi-bin/api`) with automatic fallback between Local Wi-Fi (`192.168.1.1`) and WireGuard VPN tunnel.
   3. Remove cloud polling daemon overhead from `router/sync.sh` (zero background cloud HTTP polling, sub-25ms command response time).
   4. Build WireGuard VPN Connection Diagnostic Deck, Gateway Settings, and interactive "Client Tunnel Profile (.conf)" modal with 1-tap clipboard copy in the Android mobile application.
 * **Deliverable Artifact:** Direct peer-to-peer WireGuard VPN remote control pipeline with zero cloud middlemen.
@@ -49,15 +49,15 @@
 
 ---
 
-### 🔹 Phase 03: Flutter Architecture & Cyber-Dark Design System Setup
-* **Goal:** Initialize the clean, modular Flutter project architecture with theme tokens, fonts, and responsive layout foundations.
+### 🔹 Phase 03: Native Android Architecture & Modern Glossy Design System Setup
+* **Goal:** Initialize the clean, modular native Kotlin Android project architecture with theme tokens, fonts, and responsive Jetpack Compose layout foundations.
 * **Key Tasks:**
   1. Configure `pubspec.yaml` with required dependencies (`http`, `shared_preferences`, `intl`, `local_auth`).
   2. Implement `core/theme/cyber_colors.dart` with OLED `#0A0E17`, electric cyan `#00F2FE`, and emerald `#00E676`.
   3. Implement `core/theme/cyber_theme.dart` with customized dark `ThemeData`, transparent AppBar, and custom BottomNavigationBar.
   4. Build reusable `widgets/glass_card.dart` supporting frosted acrylic glass blur and neon border styling.
   5. Implement `main.dart` with a 5-tab persistent bottom navigation shell and settings bottom sheet.
-* **Deliverable Artifact:** Running Flutter app shell with cyber-dark theme and tab navigation.
+* **Deliverable Artifact:** Running native Android app shell with glossy dark theme and tab navigation.
 
 ---
 
@@ -137,6 +137,6 @@
   1. Audit network timeouts, exception handling, and offline fallback states in `ApiService`.
   2. Scaffolding complete Android build toolchain (`AndroidManifest.xml`, `network_security_config.xml`, Gradle, and `build_apk.sh`).
   3. Verify router CPU usage remains under 2% during continuous 2.5-second polling (< 250 lines POSIX ash).
-  4. Run comprehensive test suites across Node, OpenWrt shell, and Dart AST verification (100% pass rate).
-  5. Provide one-command deployment (`router/deploy.sh`) and APK build script (`mobile_app/build_apk.sh`).
+  4. Run comprehensive test suites across Node, OpenWrt shell, and Android unit tests (100% pass rate).
+  5. Provide one-command deployment (`router/deploy.sh`) and APK build command (`cd android_native && ./gradlew assembleRelease`).
 * **Deliverable Artifact:** Production release APK toolchain, hardened router firmware helper, and complete system documentation.

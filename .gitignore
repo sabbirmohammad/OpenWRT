@@ -43,21 +43,18 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Flutter & Dart
-**/build/
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-
-# Router Backups
-router/argon_backup/
-
-# Android Native & Gradle
+# Android Native (Kotlin) & Gradle
 .gradle/
+build/
+**/build/
 **/android_native/.gradle/
 **/android_native/local.properties
 **/android_native/**/build/
+**/android_native/**/.cxx/
+**/android_native/app/key.properties
+
+# Router Backups
+router/argon_backup/
 
 # Compiled Binaries, Archives & Mobile Releases (Publish via GitHub Releases instead)
 release-output/
@@ -71,11 +68,10 @@ release-output/
 *.tar.gz
 *.zip
 *.keystore
-!**/android/app/debug.keystore
 !**/android_native/app/debug.keystore
 *.jks
-**/android/app/key.properties
 
 # Temporary & Local Scratch files
 .temp/
 *.tmp
+.agents/

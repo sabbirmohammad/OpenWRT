@@ -48,6 +48,7 @@ fun FirewallScreen(
     onAddPortForward: (PortForwardRule) -> Unit = {},
     onUnblockClient: (String) -> Unit = {},
     onSaveDmz: (ip: String, enabled: Boolean) -> Unit = { _, _ -> },
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showAddSheet by remember { mutableStateOf(false) }
@@ -60,41 +61,67 @@ fun FirewallScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Firewall & Security",
-                    color = GlossyColors.TextPrimary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+        if (onBackClick != null) {
+            item {
+                com.archerguard.openwrt.ui.components.ArcherTopAppBar(
+                    title = "Firewall & Rules",
+                    subtitle = "Port forwarding, DMZ & packet filter",
+                    onBackClick = onBackClick,
+                    actions = {
+                        com.archerguard.openwrt.ui.components.GlossyButton(
+                            text = "DMZ",
+                            onClick = { showDmzSheet = true },
+                            isPrimary = false,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                            fontSize = 12.sp
+                        )
+                        com.archerguard.openwrt.ui.components.GlossyButton(
+                            text = "+ Rule",
+                            onClick = { showAddSheet = true },
+                            isPrimary = true,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                            fontSize = 12.sp
+                        )
+                    }
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    com.archerguard.openwrt.ui.components.GlossyButton(
-                        text = "DMZ",
-                        onClick = { showDmzSheet = true },
-                        isPrimary = false,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                        fontSize = 12.sp
-                    )
-                    com.archerguard.openwrt.ui.components.GlossyButton(
-                        text = "+ Add Rule",
-                        onClick = { showAddSheet = true },
-                        isPrimary = true,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-                        fontSize = 12.sp
-                    )
-                }
             }
-            Spacer(modifier = Modifier.height(4.dp))
+        } else {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Firewall & Security",
+                        color = GlossyColors.TextPrimary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        com.archerguard.openwrt.ui.components.GlossyButton(
+                            text = "DMZ",
+                            onClick = { showDmzSheet = true },
+                            isPrimary = false,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                            fontSize = 12.sp
+                        )
+                        com.archerguard.openwrt.ui.components.GlossyButton(
+                            text = "+ Add Rule",
+                            onClick = { showAddSheet = true },
+                            isPrimary = true,
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
 
         item {

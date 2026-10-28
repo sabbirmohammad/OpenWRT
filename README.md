@@ -3,15 +3,15 @@
 <div align="center">
 
 [![OpenWrt](https://img.shields.io/badge/OpenWrt-23.05+-00B2EE?logo=openwrt&logoColor=white)](https://openwrt.org/)
-[![Flutter](https://img.shields.io/badge/Flutter-3.9+-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-3.9+-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
+[![Android](https://img.shields.io/badge/Android-Native-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Vercel](https://img.shields.io/badge/Vercel-Serverless-black?logo=vercel&logoColor=white)](https://vercel.com/)
 [![Upstash Redis](https://img.shields.io/badge/Upstash-Redis-red?logo=redis&logoColor=white)](https://upstash.com/)
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot%20API-2CA5E0?logo=telegram&logoColor=white)](https://core.telegram.org/bots/api)
 [![WireGuard](https://img.shields.io/badge/VPN-WireGuard-88171A?logo=wireguard&logoColor=white)](https://www.wireguard.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**A high-performance, production-grade network control suite connecting OpenWrt routers with an interactive Telegram Bot authorization bridge, a serverless command queue, and a Flutter mobile management dashboard.**
+**A high-performance, production-grade network control suite connecting OpenWrt routers with an interactive Telegram Bot authorization bridge, a serverless command queue, and a native Kotlin Android management dashboard.**
 
 [Overview](#-system-overview) • [Architecture](#-system-architecture) • [Mobile App](#-archerguard-mobile-dashboard) • [Quick Start](#-quick-start--deployment-guide) • [Router Setup](#-openwrt-router-configuration) • [Security](#-security-hardening) • [License](#-license)
 
@@ -34,8 +34,8 @@ ArcherGuard transforms an OpenWrt router (specifically optimized for MediaTek MT
    - **Web Admin Console (`/admin`):** Responsive web interface for desktop network oversight and manual device whitelisting.
    - **Upstash Redis Queue:** High-throughput serverless command queue decoupling router polling from webhook executions.
 
-3. **📱 ArcherGuard Mobile Dashboard (`mobile_app/`)**
-   - **Cyberpunk Glossy Dark UI:** Responsive Flutter dashboard with custom hardware gauges and live sparkline traffic monitors.
+3. **📱 ArcherGuard Mobile Dashboard (`android_native/`)**
+   - **Glossy Jetpack Compose Dark UI:** High-performance native Android dashboard with custom hardware gauges and live sparkline traffic monitors.
    - **Network Acceleration Tuning:** 1-tap toggles for CAKE SQM queue disciplines, Flow Offloading, and DoH (DNS over HTTPS).
    - **Wi-Fi Radio Inspector:** Detailed 2.4GHz / 5GHz channels, Fast Roaming (802.11r), PMF (802.11w), and Router LED Stealth Mode.
 
@@ -94,7 +94,7 @@ ArcherGuard transforms an OpenWrt router (specifically optimized for MediaTek MT
      ▼                                                       ▼
 ┌─────────────────────────┐             ┌─────────────────────────┐
 │   OpenWrt Router Script │             │   ArcherGuard Mobile    │
-│      router/sync.sh     │             │   Flutter App (LAN/VPN) │
+│      router/sync.sh     │             │   Android App (LAN/VPN) │
 └────────────┬────────────┘             └────────────┬────────────┘
              │ 7. Executes:                          │ Direct CGI REST API:
              │    - ndsctl auth <MAC> <MINUTES>      │ - Hardware vitals & telemetry
@@ -110,7 +110,7 @@ ArcherGuard transforms an OpenWrt router (specifically optimized for MediaTek MT
 
 ## 📱 ArcherGuard Mobile Dashboard
 
-The companion mobile application (`mobile_app/`) is built using **Flutter & Dart** with an immersive dark cyberpunk aesthetic. It connects directly to the OpenWrt router over local Wi-Fi or securely over a WireGuard VPN tunnel.
+The companion mobile application (`android_native/`) is built using **Native Kotlin & Jetpack Compose** with an immersive dark glossy aesthetic. It connects directly to the OpenWrt router over local Wi-Fi or securely over a WireGuard VPN tunnel.
 
 | Feature | Capabilities |
 | :--- | :--- |
@@ -141,10 +141,9 @@ The companion mobile application (`mobile_app/`) is built using **Flutter & Dart
 │   ├── bot-menu.js          # Telegram keyboards, cards, and formatting engine
 │   ├── opennds.js           # openNDS FAS token decoding & MAC normalizers
 │   └── router/safety.js     # Command whitelist validator & timing-safe security guards
-├── mobile_app/              # ArcherGuard Flutter Mobile Application
-│   ├── lib/core/            # Glossy theme, colors, and API HTTP client services
-│   ├── lib/models/          # Immutable JSON models for router telemetry and clients
-│   └── lib/presentation/    # Dashboard, Network, Devices, Firewall & Security screens
+├── android_native/          # ArcherGuard Native Kotlin Android Application
+│   ├── app/src/main/java/   # Jetpack Compose UI, ViewModels, and Retrofit API client
+│   └── app/build.gradle.kts # Android Gradle plugin & dependency configuration
 ├── public/                  # Static Web Assets
 │   ├── admin.html           # Standalone Web Admin Console
 │   └── index.html           # High-conversion responsive captive portal landing page

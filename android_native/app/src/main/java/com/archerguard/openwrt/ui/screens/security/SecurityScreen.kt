@@ -1,6 +1,7 @@
 package com.archerguard.openwrt.ui.screens.security
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
@@ -56,6 +58,7 @@ import com.archerguard.openwrt.ui.viewmodel.RouterViewModel
 fun SecurityScreen(
     status: RouterStatus,
     viewModel: RouterViewModel,
+    onNavigateToFirewall: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showAuditSheet by remember { mutableStateOf(false) }
@@ -97,11 +100,66 @@ fun SecurityScreen(
             SecurityScoreCard(
                 score = score,
                 scoreColor = scoreColor,
+                status = status,
                 onViewAudit = { showAuditSheet = true },
                 onAutoHarden = {
                     viewModel.executeRouterAction("auto_harden", emptyMap())
                 }
             )
+        }
+
+        if (onNavigateToFirewall != null) {
+            item {
+                GlossyCard(
+                    onClick = onNavigateToFirewall
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(GlossyColors.PrimaryBlue.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Security,
+                                    contentDescription = null,
+                                    tint = GlossyColors.LightBlue,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Firewall & Port Forwarding",
+                                    color = GlossyColors.TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${status.firewall.portForwards.size} Active Port Rules • DMZ ${if (status.firewall.dmzEnabled) "Enabled" else "Off"}",
+                                    color = GlossyColors.TextSecondary,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = "Open Firewall",
+                            tint = GlossyColors.TextSecondary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
         }
 
         item {
@@ -142,6 +200,7 @@ fun SecurityScreen(
 private fun SecurityScoreCard(
     score: Int,
     scoreColor: Color,
+    status: RouterStatus,
     onViewAudit: () -> Unit,
     onAutoHarden: () -> Unit
 ) {
@@ -154,7 +213,7 @@ private fun SecurityScoreCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "SECURITY RATING",
+                        text = "SECURITY SHIELD SCORE",
                         color = GlossyColors.TextSecondary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -168,10 +227,17 @@ private fun SecurityScoreCard(
                             else -> "Vulnerable to Intrusions"
                         },
                         color = scoreColor,
-                        fontSize = 16.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$score / 100 points baseline audit",
+                        color = GlossyColors.TextMuted,
+                        fontSize = 12.sp,
+                        style = GlossyColors.TabularCaption
                     )
                 }
 
@@ -180,9 +246,23 @@ private fun SecurityScoreCard(
                 CircularGauge(
                     value = score.toDouble(),
                     label = "Defense",
-                    size = 72.dp,
+                    size = 76.dp,
                     activeColor = scoreColor
                 )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Defense Checklist Badges Strip
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                DefenseCheckPill("PMF", status.wireless.pmfProtected, Modifier.weight(1f))
+                DefenseCheckPill("Rebind", status.network.dnsRebindProtection, Modifier.weight(1f))
+                DefenseCheckPill("DoH", status.network.dohEnabled, Modifier.weight(1f))
+                DefenseCheckPill("WAN Lock", status.network.wanLockdown, Modifier.weight(1f))
+                DefenseCheckPill("Isolation", status.firewall.guestIsolation, Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -192,7 +272,7 @@ private fun SecurityScoreCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 GlossyButton(
-                    text = "Audit Checklist",
+                    text = "Full Audit",
                     onClick = onViewAudit,
                     icon = Icons.Default.Shield,
                     isPrimary = false,
@@ -203,9 +283,46 @@ private fun SecurityScoreCard(
                     onClick = onAutoHarden,
                     icon = Icons.Default.Lock,
                     isPrimary = true,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1.2f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DefenseCheckPill(
+    label: String,
+    passed: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val color = if (passed) GlossyColors.EmeraldMint else GlossyColors.AmberWarm
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(color.copy(alpha = 0.15f))
+            .border(0.5.dp, color.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = if (passed) Icons.Default.Check else Icons.Default.Warning,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(10.dp)
+            )
+            Spacer(modifier = Modifier.width(3.dp))
+            Text(
+                text = label,
+                color = color,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
         }
     }
 }

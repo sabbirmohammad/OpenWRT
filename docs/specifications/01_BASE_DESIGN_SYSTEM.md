@@ -1,6 +1,6 @@
 # 🎨 ArcherGuard C6 — Base Design System & UI/UX Architecture
 
-> **Target Platform:** Android (Flutter 3.x+ / Dart 3.x+)  
+> **Target Platform:** Android (Native Kotlin / Jetpack Compose)  
 > **Target Hardware:** TP-Link Archer C6 v3 (MediaTek MT7621DAT, OpenWrt 21.02/22.03/23.05+)  
 > **Design Language:** Cyber-Dark Glassmorphism & Neon Telemetry  
 > **Primary Goal:** Sub-10ms ultra-responsive hardware router controller with deep telemetry and intuitive management.
@@ -98,7 +98,7 @@ A frosted acrylic container with dual-layer blur, subtle 1px border gradient, an
 * **Backdrop Filter:** `ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0)`
 
 ### 4.2 Animated Radial Speedometer (`lib/widgets/animated_speedometer.dart`)
-* **Framework:** Pure Flutter `CustomPainter` with 60 FPS physics-based needle damping.
+* **Framework:** Jetpack Compose `Canvas` with 60 FPS physics-based needle damping.
 * **Dial Range:** 0 to 100+ Mbps dynamic logarithmic scaling.
 * **Glow Layer:** Radial gradient path with blurred cyan/emerald neon arcs.
 * **Center Display:** Instantaneous Download / Upload throughput formatted to Mbps/Kbps with peak speed indicators.
