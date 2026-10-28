@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/glossy_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/clipboard_helper.dart';
 import '../../../../models/router_status_model.dart';
 import '../../../widgets/glossy_badge.dart';
 import '../../../widgets/glossy_button.dart';
@@ -86,12 +88,7 @@ class ShareSsidSheet extends StatelessWidget {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: qrPayload));
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Wi-Fi connection string copied to clipboard!'),
-                    backgroundColor: GlossyColors.emeraldMint,
-                  ),
-                );
+                AppFeedback.showSuccess(context, 'Wi-Fi connection string copied to clipboard!');
               },
             ),
           ],
@@ -122,16 +119,7 @@ class ShareSsidSheet extends StatelessWidget {
         if (canCopy)
           IconButton(
             icon: const Icon(Icons.copy_rounded, color: GlossyColors.lightBlue, size: 18),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: value));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Copied "$value" to clipboard.'),
-                  backgroundColor: GlossyColors.emeraldMint,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
+            onPressed: () => ClipboardHelper.copy(context, value, label),
           ),
       ],
     );

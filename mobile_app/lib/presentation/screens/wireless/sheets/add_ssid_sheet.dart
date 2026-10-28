@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/glossy_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../controllers/router_controller.dart';
 import '../../../widgets/glossy_button.dart';
 import '../../../widgets/glossy_input.dart';
@@ -31,9 +32,7 @@ class _AddSsidSheetState extends State<AddSsidSheet> {
   Future<void> _createSsid() async {
     final ssid = _ssidController.text.trim();
     if (ssid.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an SSID name.'), backgroundColor: GlossyColors.roseCoral),
-      );
+      AppFeedback.showError(context, 'Please enter an SSID name.');
       return;
     }
 
@@ -48,18 +47,11 @@ class _AddSsidSheetState extends State<AddSsidSheet> {
       );
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Virtual SSID "$ssid" created on $_selectedRadio.'),
-            backgroundColor: GlossyColors.emeraldMint,
-          ),
-        );
+        AppFeedback.showSuccess(context, 'Virtual SSID "$ssid" created on $_selectedRadio.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add SSID: $e'), backgroundColor: GlossyColors.roseCoral),
-        );
+        AppFeedback.showError(context, 'Failed to add SSID: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

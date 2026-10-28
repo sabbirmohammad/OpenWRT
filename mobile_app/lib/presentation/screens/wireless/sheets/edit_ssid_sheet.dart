@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/glossy_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../models/router_status_model.dart';
 import '../../../controllers/router_controller.dart';
 import '../../../widgets/glossy_badge.dart';
@@ -43,9 +44,7 @@ class _EditSsidSheetState extends State<EditSsidSheet> {
   Future<void> _saveChanges() async {
     final newName = _ssidController.text.trim();
     if (newName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('SSID name cannot be empty.'), backgroundColor: GlossyColors.roseCoral),
-      );
+      AppFeedback.showError(context, 'SSID name cannot be empty.');
       return;
     }
 
@@ -60,18 +59,11 @@ class _EditSsidSheetState extends State<EditSsidSheet> {
       );
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('SSID "${widget.ssid.id}" settings saved.'),
-            backgroundColor: GlossyColors.emeraldMint,
-          ),
-        );
+        AppFeedback.showSuccess(context, 'SSID "${widget.ssid.id}" settings saved.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update SSID: $e'), backgroundColor: GlossyColors.roseCoral),
-        );
+        AppFeedback.showError(context, 'Failed to update SSID: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

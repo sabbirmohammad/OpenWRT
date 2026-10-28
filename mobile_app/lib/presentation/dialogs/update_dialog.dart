@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/services/github_update_service.dart';
 import '../../core/theme/glossy_colors.dart';
+import '../../core/utils/formatters.dart';
 import '../../models/app_update_info.dart';
 import '../widgets/glossy_button.dart';
 
@@ -115,9 +116,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
   }
 
   String _formatBytes(int bytes) {
-    if (bytes <= 0) return '0 MB';
-    final mb = bytes / (1024 * 1024);
-    return '${mb.toStringAsFixed(1)} MB';
+    if (bytes <= 0) return '0 B';
+    return Formatters.formatBytes(bytes);
   }
 
   @override

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../../../core/theme/glossy_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
+import '../../../../core/utils/clipboard_helper.dart';
 
+/// Legacy adapter delegating to standard [AppFeedback] and [ClipboardHelper] (DRY compliant).
+@Deprecated('Use AppFeedback and ClipboardHelper directly.')
 class DeviceFeedbackHelper {
   DeviceFeedbackHelper._();
 
@@ -11,43 +13,11 @@ class DeviceFeedbackHelper {
     required IconData icon,
     required Color color,
   }) {
-    HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 84),
-        elevation: 8,
-        backgroundColor: GlossyColors.backgroundElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: color.withValues(alpha: 0.6), width: 1.2),
-        ),
-        content: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: GlossyColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        duration: const Duration(seconds: 3),
-      ),
+    AppFeedback.showSnackBar(
+      context,
+      message: message,
+      icon: icon,
+      customColor: color,
     );
   }
 
@@ -56,12 +26,6 @@ class DeviceFeedbackHelper {
     required String text,
     required String label,
   }) {
-    Clipboard.setData(ClipboardData(text: text));
-    showNotification(
-      context: context,
-      message: '$label copied to clipboard ($text)',
-      icon: Icons.copy_rounded,
-      color: GlossyColors.primaryBlue,
-    );
+    ClipboardHelper.copy(context, text, label);
   }
 }

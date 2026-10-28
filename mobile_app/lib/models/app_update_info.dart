@@ -1,3 +1,5 @@
+import '../core/utils/formatters.dart';
+
 class AppUpdateInfo {
   final String currentVersion;
   final String currentBuildNumber;
@@ -27,8 +29,7 @@ class AppUpdateInfo {
 
   String get formattedSize {
     if (apkSize <= 0) return '';
-    final mb = apkSize / (1024 * 1024);
-    return '${mb.toStringAsFixed(1)} MB';
+    return Formatters.formatBytes(apkSize);
   }
 
   factory AppUpdateInfo.fromGitHubRelease({

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/glossy_colors.dart';
+import '../../../../core/utils/app_feedback.dart';
 import '../../../../models/router_status_model.dart';
 import '../../../controllers/router_controller.dart';
 
@@ -59,21 +60,11 @@ class DeleteSsidDialog {
       try {
         await controller.deleteSsid(ssid.id);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Virtual SSID "${ssid.ssid}" deleted.'),
-              backgroundColor: GlossyColors.emeraldMint,
-            ),
-          );
+          AppFeedback.showSuccess(context, 'Virtual SSID "${ssid.ssid}" deleted.');
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete SSID: $e'),
-              backgroundColor: GlossyColors.roseCoral,
-            ),
-          );
+          AppFeedback.showError(context, 'Failed to delete SSID: $e');
         }
       }
     }

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/glossy_colors.dart';
+import '../../core/utils/app_feedback.dart';
 import '../controllers/router_controller.dart';
 import '../dialogs/update_dialog.dart';
 import '../screens/firewall_screen.dart';
@@ -168,18 +169,17 @@ class GlossySidebarDrawer extends StatelessWidget {
                                 updateService: controller.updateService,
                               );
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: GlossyColors.backgroundElevated,
-                                  content: Text(
-                                    info != null
-                                        ? 'আপনার অ্যাপ্লিকেশনটি আপ-টু-ডেট আছে (v${info.currentVersion})'
-                                        : 'আপডেট চেক করতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন চেক করুন।',
-                                    style: const TextStyle(color: GlossyColors.textPrimary),
-                                  ),
-                                  duration: const Duration(seconds: 3),
-                                ),
-                              );
+                              if (info != null) {
+                                AppFeedback.showSuccess(
+                                  context,
+                                  'আপনার অ্যাপ্লিকেশনটি আপ-টু-ডেট আছে (v${info.currentVersion})',
+                                );
+                              } else {
+                                AppFeedback.showError(
+                                  context,
+                                  'আপডেট চেক করতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন চেক করুন।',
+                                );
+                              }
                             }
                           },
                         ),

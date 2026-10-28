@@ -67,7 +67,11 @@ assert_test "Speed action returns traffic metrics" "$?"
 
 # 5. Test 'clients' action JSON output
 printf "\n5. Testing 'clients' action:\n"
-CLIENT_OUT=$(REQUEST_METHOD="GET" QUERY_STRING="action=clients" "$HELPER" 2>/dev/null)
+# 5. Test 'clients' action JSON output (authenticated)
+printf "\n5. Testing 'clients' action:\n"
+mkdir -p /tmp/archer_sessions
+touch /tmp/archer_sessions/test_session_token_123
+CLIENT_OUT=$(REQUEST_METHOD="GET" QUERY_STRING="action=clients&token=test_session_token_123" "$HELPER" 2>/dev/null)
 printf "%s" "$CLIENT_OUT" | grep -q '"clients":\['
 assert_test "Clients action returns clients list" "$?"
 
@@ -75,31 +79,33 @@ assert_test "Clients action returns clients list" "$?"
 printf "\n6. Testing Security & Authentication Check:\n"
 AUTH_FAIL=$(REQUEST_METHOD="GET" QUERY_STRING="action=control&cmd=reboot" "$HELPER" 2>/dev/null)
 printf "%s" "$AUTH_FAIL" | grep -q '"error":"unauthorized"'
-assert_test "Mutating action rejects missing X-Router-Secret" "$?"
+assert_test "Mutating action rejects unauthenticated session" "$?"
 
 # 7. Test Authorized action execution (drop_caches dry-run)
 printf "\n7. Testing Authorized Mutating Action:\n"
-AUTH_PASS=$(REQUEST_METHOD="GET" QUERY_STRING="action=control&cmd=drop_caches&token=admin_secret_c6" "$HELPER" 2>/dev/null)
+AUTH_PASS=$(REQUEST_METHOD="GET" QUERY_STRING="action=control&cmd=drop_caches&token=test_session_token_123" "$HELPER" 2>/dev/null)
 printf "%s" "$AUTH_PASS" | grep -q '"status":"success"'
-assert_test "Authorized action succeeds with secret token" "$?"
+assert_test "Authorized action succeeds with valid session token" "$?"
 
 # 8. Test 'analytics' action JSON output
 printf "\n8. Testing 'analytics' action:\n"
-ANALYTICS_OUT=$(REQUEST_METHOD="GET" QUERY_STRING="action=analytics" "$HELPER" 2>/dev/null)
+ANALYTICS_OUT=$(REQUEST_METHOD="GET" QUERY_STRING="action=analytics&token=test_session_token_123" "$HELPER" 2>/dev/null)
 printf "%s" "$ANALYTICS_OUT" | grep -q '"analytics":'
 assert_test "Analytics action returns bandwidth quota metrics" "$?"
 
 # 9. Test 'cron' action JSON output
 printf "\n9. Testing 'cron' action:\n"
-CRON_OUT=$(REQUEST_METHOD="GET" QUERY_STRING="action=cron" "$HELPER" 2>/dev/null)
+CRON_OUT=$(REQUEST_METHOD="GET" QUERY_STRING="action=cron&token=test_session_token_123" "$HELPER" 2>/dev/null)
 printf "%s" "$CRON_OUT" | grep -q '"crontab":'
 assert_test "Cron action returns crontab automation metrics" "$?"
 
 # 10. Test Authorized Cron Toggle Action
 printf "\n10. Testing Authorized Cron Toggle Action:\n"
-CRON_TOGGLE=$(REQUEST_METHOD="GET" QUERY_STRING="action=control&cmd=toggle_cron_task&target=midnight_reboot&val=1&token=admin_secret_c6" "$HELPER" 2>/dev/null)
+CRON_TOGGLE=$(REQUEST_METHOD="GET" QUERY_STRING="action=control&cmd=toggle_cron_task&target=midnight_reboot&val=1&token=test_session_token_123" "$HELPER" 2>/dev/null)
 printf "%s" "$CRON_TOGGLE" | grep -q '"status":"success"'
-assert_test "Authorized cron toggle succeeds with secret token" "$?"
+assert_test "Authorized cron toggle succeeds with valid session token" "$?"
+
+rm -f /tmp/archer_sessions/test_session_token_123
 
 printf "\n=======================================================\n"
 printf "Results: %d Passed, %d Failed\n" "$TESTS_PASSED" "$TESTS_FAILED"

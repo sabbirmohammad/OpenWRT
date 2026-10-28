@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/glossy_colors.dart';
+import '../../core/utils/app_feedback.dart';
 import '../../models/router_status_model.dart';
 import '../controllers/router_controller.dart';
 import '../widgets/glossy_badge.dart';
@@ -33,15 +34,11 @@ class _WirelessScreenState extends State<WirelessScreen> {
     try {
       await widget.controller.executeAction('wifi_toggle');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Master Wi-Fi power toggled successfully.'), backgroundColor: GlossyColors.emeraldMint),
-        );
+        AppFeedback.showSuccess(context, 'Master Wi-Fi power toggled successfully.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to toggle Wi-Fi: $e'), backgroundColor: GlossyColors.roseCoral),
-        );
+        AppFeedback.showError(context, 'Failed to toggle Wi-Fi: $e');
       }
     }
   }
@@ -56,18 +53,15 @@ class _WirelessScreenState extends State<WirelessScreen> {
     try {
       await widget.controller.toggleSsid(ssid.id, targetState);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('SSID "${ssid.ssid}" ${targetState ? "enabled" : "disabled"}.'),
-            backgroundColor: targetState ? GlossyColors.emeraldMint : GlossyColors.amberWarm,
-          ),
-        );
+        if (targetState) {
+          AppFeedback.showSuccess(context, 'SSID "${ssid.ssid}" enabled.');
+        } else {
+          AppFeedback.showWarning(context, 'SSID "${ssid.ssid}" disabled.');
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update SSID: $e'), backgroundColor: GlossyColors.roseCoral),
-        );
+        AppFeedback.showError(context, 'Failed to update SSID: $e');
       }
     } finally {
       if (mounted) setState(() => _togglingSsidId = null);
@@ -82,15 +76,11 @@ class _WirelessScreenState extends State<WirelessScreen> {
         'txpower': power,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Applied TX power of $power dBm to $radio.'), backgroundColor: GlossyColors.emeraldMint),
-        );
+        AppFeedback.showSuccess(context, 'Applied TX power of $power dBm to $radio.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to set TX power: $e'), backgroundColor: GlossyColors.roseCoral),
-        );
+        AppFeedback.showError(context, 'Failed to set TX power: $e');
       }
     } finally {
       if (mounted) setState(() => _isUpdatingTx = false);

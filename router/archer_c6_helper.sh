@@ -38,6 +38,27 @@ ACTION=$(printf "%s" "$QUERY_STRING" | sed -n 's/.*action=\([^&]*\).*/\1/p')
 
 # 5. Dispatch Request
 case "$ACTION" in
+    "login")
+        _payload=""
+        [ "$REQUEST_METHOD" = "POST" ] && [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ] && read -n "$CONTENT_LENGTH" _payload
+        _user=$(extract_param "username" "$_payload")
+        [ -z "$_user" ] && _user=$(extract_param "user" "$_payload")
+        [ -z "$_user" ] && _user="root"
+        _pass=$(extract_param "password" "$_payload")
+        [ -z "$_pass" ] && _pass=$(extract_param "pass" "$_payload")
+        handle_login "$_user" "$_pass"
+        ;;
+    "logout")
+        _payload=""
+        [ "$REQUEST_METHOD" = "POST" ] && [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ] && read -n "$CONTENT_LENGTH" _payload
+        _token=$(extract_param "token" "$_payload")
+        [ -z "$_token" ] && _token="$HTTP_X_ROUTER_SESSION"
+        if [ -n "$_token" ]; then
+            rm -f "/tmp/archer_sessions/$_token" 2>/dev/null
+            command -v ubus >/dev/null 2>&1 && ubus -t 2 call session destroy "{\"ubus_rpc_session\":\"$_token\"}" 2>/dev/null
+        fi
+        json_ok "Logged out successfully"
+        ;;
     "control")
         execute_control
         ;;

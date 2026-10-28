@@ -5,6 +5,7 @@ import '../../../../core/utils/input_validators.dart';
 import '../../../controllers/router_controller.dart';
 import '../../../widgets/glossy_button.dart';
 import '../../../widgets/glossy_input.dart';
+import '../../../widgets/glossy_modal_sheet.dart';
 
 class DmzConfigSheet extends StatefulWidget {
   final RouterController controller;
@@ -58,27 +59,11 @@ class _DmzConfigSheetState extends State<DmzConfigSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-      decoration: const BoxDecoration(
-        color: GlossyColors.backgroundSecondary,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return GlossyModalSheet(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 38,
-              height: 4,
-              decoration: BoxDecoration(
-                color: GlossyColors.glassBorderLight,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
           const Row(
             children: [
               Icon(Icons.shield_outlined, color: GlossyColors.amberWarm, size: 22),

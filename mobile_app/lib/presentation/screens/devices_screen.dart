@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/glossy_colors.dart';
+import '../../core/utils/app_feedback.dart';
+import '../../core/utils/clipboard_helper.dart';
 import '../../models/router_status_model.dart';
 import '../controllers/router_controller.dart';
 import '../widgets/glossy_badge.dart';
 import 'devices/dialogs/rename_device_dialog.dart';
 import 'devices/sheets/device_details_sheet.dart';
 import 'devices/utils/device_access_actions.dart';
-import 'devices/utils/device_feedback_helper.dart';
 import 'devices/utils/device_network_actions.dart';
 import 'devices/widgets/device_card.dart';
 import 'devices/widgets/device_empty_state.dart';
@@ -51,7 +52,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
   }
 
   void _notify({required String message, required IconData icon, required Color color}) {
-    DeviceFeedbackHelper.showNotification(context: context, message: message, icon: icon, color: color);
+    AppFeedback.showSnackBar(context, message: message, icon: icon, customColor: color);
   }
 
   ClientInfo _latestClient(ClientInfo client) {
@@ -99,7 +100,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
           controller: widget.controller,
           onNotify: _notify,
         ),
-        onCopy: (val, label) => DeviceFeedbackHelper.copyToClipboard(context: context, text: val, label: label),
+        onCopy: (val, label) => ClipboardHelper.copy(context, val, label),
       ),
     );
   }

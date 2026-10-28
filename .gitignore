@@ -53,6 +53,12 @@ coverage/
 # Router Backups
 router/argon_backup/
 
+# Android Native & Gradle
+.gradle/
+**/android_native/.gradle/
+**/android_native/local.properties
+**/android_native/**/build/
+
 # Compiled Binaries, Archives & Mobile Releases (Publish via GitHub Releases instead)
 release-output/
 *.apk
@@ -66,6 +72,7 @@ release-output/
 *.zip
 *.keystore
 !**/android/app/debug.keystore
+!**/android_native/app/debug.keystore
 *.jks
 **/android/app/key.properties
 
