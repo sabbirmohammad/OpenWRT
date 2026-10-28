@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/glossy_colors.dart';
+import '../../../core/utils/formatters.dart';
 
 /// Graphical tile displaying System Uptime with stability indicators.
 class UptimeStabilityTile extends StatelessWidget {
@@ -14,6 +15,7 @@ class UptimeStabilityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayUptime = formattedUptime;
     // Stability calculation: >1 day is 5 segments, >6 hours is 4, >1 hour is 3, >10 mins is 2, else 1
     int activeSegments = 1;
     if (uptimeSeconds >= 86400) {
@@ -73,10 +75,10 @@ class UptimeStabilityTile extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            formattedUptime,
+            displayUptime,
             style: const TextStyle(
               color: GlossyColors.textPrimary,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
             ),

@@ -10,8 +10,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,6 +57,10 @@ import com.archerguard.openwrt.ui.components.CircularGauge
 import com.archerguard.openwrt.ui.components.GlossyButton
 import com.archerguard.openwrt.ui.components.GlossyCard
 import com.archerguard.openwrt.ui.components.TrafficSparkline
+import com.archerguard.openwrt.ui.screens.dashboard.widgets.CpuCoresMiniCard
+import com.archerguard.openwrt.ui.screens.dashboard.widgets.FreeMemoryMiniCard
+import com.archerguard.openwrt.ui.screens.dashboard.widgets.LoadAverageMiniCard
+import com.archerguard.openwrt.ui.screens.dashboard.widgets.UptimeMiniCard
 import com.archerguard.openwrt.ui.theme.GlossyColors
 import com.archerguard.openwrt.ui.viewmodel.ConnectionStatus
 import com.archerguard.openwrt.ui.viewmodel.RouterUiState
@@ -331,74 +337,49 @@ private fun HardwareVitalsCard(status: RouterStatus) {
             HorizontalDivider(color = GlossyColors.GlassBorderDark, thickness = 0.5.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Vital Details Grid (2x2)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                VitalDetailTile(
-                    icon = Icons.Default.Timer,
-                    label = "System Uptime",
-                    value = status.cpu.formattedUptime,
-                    modifier = Modifier.weight(1f)
+            // Vital Details Grid (2x2) with graphical interactive mini cards
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                UptimeMiniCard(
+                    uptimeSeconds = status.cpu.uptimeSeconds,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
-                VitalDetailTile(
-                    icon = Icons.Default.Speed,
-                    label = "Load Average",
-                    value = status.cpu.loadAvg,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                VitalDetailTile(
-                    icon = Icons.Default.Memory,
-                    label = "CPU Cores",
-                    value = "${status.cpu.cores}C / ${status.cpu.threads}T @ ${status.cpu.frequencyMhz}MHz",
-                    modifier = Modifier.weight(1f)
-                )
-                VitalDetailTile(
-                    icon = Icons.Default.Storage,
-                    label = "Free Memory",
-                    value = "${status.memory.freeKb / 1024} MB free",
-                    modifier = Modifier.weight(1f)
+                LoadAverageMiniCard(
+                    loadAvgString = status.cpu.loadAvg,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun VitalDetailTile(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(GlossyColors.GlassSurface)
-            .padding(horizontal = 10.dp, vertical = 8.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = GlossyColors.LightBlue,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = label,
-                    color = GlossyColors.TextMuted,
-                    fontSize = 10.sp
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                CpuCoresMiniCard(
+                    cores = status.cpu.cores,
+                    threads = status.cpu.threads,
+                    frequencyMhz = status.cpu.frequencyMhz,
+                    usagePercent = status.cpu.usagePercent,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
-                Text(
-                    text = value,
-                    color = GlossyColors.TextPrimary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                FreeMemoryMiniCard(
+                    totalKb = status.memory.totalKb,
+                    freeKb = status.memory.freeKb,
+                    usedKb = status.memory.usedKb,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
                 )
             }
         }

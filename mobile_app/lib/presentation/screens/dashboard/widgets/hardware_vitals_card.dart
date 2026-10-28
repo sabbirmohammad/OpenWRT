@@ -70,7 +70,7 @@ class HardwareVitalsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: UptimeStabilityTile(
-                  formattedUptime: status.cpu.formattedUptime,
+                  formattedUptime: status.cpu.formattedUptimeWithSeconds,
                   uptimeSeconds: status.cpu.uptimeSeconds,
                 ),
               ),
@@ -94,8 +94,10 @@ class HardwareVitalsCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: ClockFrequencyTile(
-                  frequencyMhz: status.cpu.frequencyMhz,
+                child: FreeMemoryTile(
+                  totalKb: status.memory.totalKb,
+                  freeKb: status.memory.freeKb,
+                  usedKb: status.memory.usedKb,
                 ),
               ),
             ],

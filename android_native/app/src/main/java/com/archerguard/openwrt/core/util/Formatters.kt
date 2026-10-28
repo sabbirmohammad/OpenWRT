@@ -32,4 +32,17 @@ object Formatters {
             else -> "${minutes}m"
         }
     }
+
+    fun formatUptimeWithSeconds(seconds: Long): String {
+        val days = seconds / 86400
+        val hours = (seconds % 86400) / 3600
+        val minutes = (seconds % 3600) / 60
+        val secs = seconds % 60
+        return when {
+            days > 0 -> "${days}d ${hours}h ${minutes}m ${secs}s"
+            hours > 0 -> "${hours}h ${minutes}m ${secs}s"
+            minutes > 0 -> "${minutes}m ${secs}s"
+            else -> "${secs}s"
+        }
+    }
 }

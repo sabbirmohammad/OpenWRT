@@ -39,4 +39,5 @@ class CpuInfo {
   }
 
   String get formattedUptime => Formatters.formatUptime(uptimeSeconds);
+  String get formattedUptimeWithSeconds => Formatters.formatUptimeWithSeconds(uptimeSeconds);
 }

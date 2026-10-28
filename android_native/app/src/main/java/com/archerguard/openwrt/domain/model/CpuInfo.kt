@@ -18,4 +18,7 @@ data class CpuInfo(
 ) {
     val formattedUptime: String
         get() = Formatters.formatUptime(uptimeSeconds)
+
+    val formattedUptimeWithSeconds: String
+        get() = Formatters.formatUptimeWithSeconds(uptimeSeconds)
 }
