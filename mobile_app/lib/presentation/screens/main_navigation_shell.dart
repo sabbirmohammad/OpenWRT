@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/glossy_colors.dart';
 import '../controllers/router_controller.dart';
+import '../dialogs/update_dialog.dart';
 import '../widgets/glossy_bottom_bar.dart';
 import '../widgets/glossy_sidebar_drawer.dart';
 import 'dashboard_screen.dart';
@@ -23,6 +24,35 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
   double? _dragStartX;
+  bool _hasPromptedUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    final update = widget.controller.availableUpdate;
+    if (update != null && update.hasUpdate && !_hasPromptedUpdate && mounted) {
+      _hasPromptedUpdate = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          UpdateDialog.show(
+            context,
+            updateInfo: update,
+            updateService: widget.controller.updateService,
+          );
+        }
+      });
+    }
+  }
 
   void _openEndDrawer() {
     HapticFeedback.selectionClick();

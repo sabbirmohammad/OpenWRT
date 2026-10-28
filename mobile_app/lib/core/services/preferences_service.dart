@@ -6,6 +6,9 @@ class PreferencesService {
   static const String _keyRouterPort = 'pref_router_port';
   static const String _keyRouterSecret = 'pref_router_secret';
   static const String _keyAutoRefresh = 'pref_auto_refresh';
+  static const String _keyAutoCheckUpdates = 'pref_auto_check_updates';
+  static const String _keyGithubRepo = 'pref_github_repo';
+  static const String _keyLastCheckTimestamp = 'pref_last_check_timestamp';
 
   final SharedPreferences _prefs;
 
@@ -40,10 +43,31 @@ class PreferencesService {
     await _prefs.setBool(_keyAutoRefresh, enabled);
   }
 
+  bool get autoCheckUpdates => _prefs.getBool(_keyAutoCheckUpdates) ?? true;
+
+  Future<void> setAutoCheckUpdates(bool enabled) async {
+    await _prefs.setBool(_keyAutoCheckUpdates, enabled);
+  }
+
+  String get githubRepo => _prefs.getString(_keyGithubRepo) ?? 'sabbirmohammad/OpenWRT';
+
+  Future<void> setGithubRepo(String repo) async {
+    await _prefs.setString(_keyGithubRepo, repo.trim());
+  }
+
+  int get lastCheckTimestamp => _prefs.getInt(_keyLastCheckTimestamp) ?? 0;
+
+  Future<void> setLastCheckTimestamp(int timestamp) async {
+    await _prefs.setInt(_keyLastCheckTimestamp, timestamp);
+  }
+
   Future<void> resetToDefaults() async {
     await _prefs.remove(_keyRouterIp);
     await _prefs.remove(_keyRouterPort);
     await _prefs.remove(_keyRouterSecret);
     await _prefs.remove(_keyAutoRefresh);
+    await _prefs.remove(_keyAutoCheckUpdates);
+    await _prefs.remove(_keyGithubRepo);
+    await _prefs.remove(_keyLastCheckTimestamp);
   }
 }

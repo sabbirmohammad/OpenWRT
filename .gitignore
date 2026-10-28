@@ -54,6 +54,7 @@ coverage/
 router/argon_backup/
 
 # Compiled Binaries, Archives & Mobile Releases (Publish via GitHub Releases instead)
+release-output/
 *.apk
 *.aab
 *.ipa

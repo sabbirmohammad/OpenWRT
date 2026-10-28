@@ -91,6 +91,10 @@ class RouterApiService {
         headers: {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache',
+          if (_prefs.routerSecret.isNotEmpty) ...{
+            'X-Router-Secret': _prefs.routerSecret,
+            'Authorization': 'Bearer ${_prefs.routerSecret}',
+          },
         },
       ).timeout(ApiConstants.timeout);
 
@@ -126,6 +130,7 @@ class RouterApiService {
         headers: {
           'Content-Type': 'application/json',
           'X-Router-Secret': secret,
+          if (secret.isNotEmpty) 'Authorization': 'Bearer $secret',
         },
         body: jsonEncode(bodyPayload),
       ).timeout(const Duration(seconds: 10));
