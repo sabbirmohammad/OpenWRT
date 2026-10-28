@@ -65,6 +65,7 @@ release-output/
 *.tar.gz
 *.zip
 *.keystore
+!**/android/app/debug.keystore
 *.jks
 **/android/app/key.properties
 
