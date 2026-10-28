@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,7 +29,7 @@ fun CircularGauge(
     label: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    size: Dp = 96.dp,
+    size: Dp = 82.dp,
     activeColor: Color? = null
 ) {
     val clampedVal = value.coerceIn(0.0, 100.0)
@@ -45,13 +48,11 @@ fun CircularGauge(
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.size(size)) {
-                val strokeWidth = 8.dp.toPx()
-                val radius = (this.size.minDimension - strokeWidth) / 2f
-                val centerOffset = center
+                val strokeWidth = 7.dp.toPx()
 
                 // Background track arc (270 degrees sweep starting from 135 degrees)
                 drawArc(
-                    color = GlossyColors.GlassBorderDark.copy(alpha = 0.25f),
+                    color = GlossyColors.GlassBorderDark.copy(alpha = 0.35f),
                     startAngle = 135f,
                     sweepAngle = 270f,
                     useCenter = false,
@@ -71,29 +72,38 @@ fun CircularGauge(
                 }
             }
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.widthIn(max = size - 16.dp)
+            ) {
                 Text(
                     text = String.format(Locale.US, "%.0f%%", clampedVal),
                     color = GlossyColors.TextPrimary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
-                if (subtitle != null) {
+                if (!subtitle.isNullOrBlank()) {
                     Text(
                         text = subtitle,
                         color = GlossyColors.TextMuted,
-                        fontSize = 10.sp
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = label,
             color = GlossyColors.TextSecondary,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center
         )
     }
 }

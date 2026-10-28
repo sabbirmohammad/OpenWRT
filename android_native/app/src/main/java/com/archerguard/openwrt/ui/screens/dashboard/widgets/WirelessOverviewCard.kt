@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.archerguard.openwrt.domain.model.RadioInfo
@@ -134,8 +136,8 @@ private fun RadioMiniTile(
                 )
                 Box(
                     modifier = Modifier
-                        .size(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .size(7.dp)
+                        .clip(CircleShape)
                         .background(if (radio.enabled) GlossyColors.EmeraldMint else GlossyColors.RoseCoral)
                 )
             }
@@ -145,13 +147,16 @@ private fun RadioMiniTile(
                 color = GlossyColors.TextPrimary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "Ch ${radio.channel} • ${radio.connectedClients} active",
+                text = "Ch ${radio.channel} • ${radio.txPowerDbm} dBm • ${radio.connectedClients} active",
                 color = GlossyColors.TextMuted,
-                fontSize = 11.sp
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

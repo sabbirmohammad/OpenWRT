@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.archerguard.openwrt.domain.model.ClientInfo
@@ -83,7 +84,7 @@ fun ConnectedDevicesSummaryCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             if (clients.isEmpty()) {
                 Text(
@@ -102,10 +103,13 @@ fun ConnectedDevicesSummaryCard(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Box(
                                 modifier = Modifier
-                                    .size(28.dp)
+                                    .size(30.dp)
                                     .clip(CircleShape)
                                     .background(GlossyColors.PrimaryBlue.copy(alpha = 0.2f)),
                                 contentAlignment = Alignment.Center
@@ -114,30 +118,44 @@ fun ConnectedDevicesSummaryCard(
                                     imageVector = if (client.connectionType == "LAN") Icons.Default.Devices else Icons.Default.Wifi,
                                     contentDescription = null,
                                     tint = GlossyColors.LightBlue,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(15.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(10.dp))
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = client.displayName,
                                     color = GlossyColors.TextPrimary,
                                     fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = client.ip,
+                                    text = "${client.ip} • ${if (client.connectionType == "LAN") "Ethernet" else client.ssidName.ifBlank { client.connectionType }}",
                                     color = GlossyColors.TextSecondary,
-                                    fontSize = 11.sp
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
 
-                        Text(
-                            text = if (client.connectionType == "LAN") "LAN" else "${client.signalDbm} dBm",
-                            color = GlossyColors.TextMuted,
-                            fontSize = 11.sp
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(GlossyColors.GlassSurface)
+                                .padding(horizontal = 7.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = if (client.connectionType == "LAN") "LAN" else "${client.signalDbm} dBm",
+                                color = if (client.connectionType == "LAN") GlossyColors.LightBlue else GlossyColors.EmeraldMint,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                     if (index < previewList.size - 1) {
                         HorizontalDivider(color = GlossyColors.GlassBorderDark, thickness = 0.5.dp)

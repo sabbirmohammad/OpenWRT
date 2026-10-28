@@ -1,6 +1,12 @@
 package com.archerguard.openwrt.ui.screens.dashboard
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,20 +25,29 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.archerguard.openwrt.domain.model.RouterStatus
@@ -71,9 +86,12 @@ fun DashboardScreen(
             )
         }
 
-        if (uiState.connectionStatus == ConnectionStatus.OFFLINE) {
+        if (uiState.connectionStatus == ConnectionStatus.OFFLINE || uiState.connectionStatus == ConnectionStatus.ERROR) {
             item {
-                OfflineBanner(uiState.errorMessage ?: "Router is unreachable")
+                OfflineBanner(
+                    message = uiState.errorMessage ?: if (uiState.connectionStatus == ConnectionStatus.OFFLINE) "Router is unreachable" else "Connection error",
+                    onRetry = onRefresh
+                )
             }
         }
 
@@ -82,9 +100,7 @@ fun DashboardScreen(
         }
 
         item {
-            InternetTrafficCard(
-                uiState = uiState
-            )
+            InternetTrafficCard(uiState = uiState)
         }
 
         item {
@@ -110,7 +126,7 @@ fun DashboardScreen(
         }
 
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -121,6 +137,16 @@ private fun HeaderSection(
     onRefresh: () -> Unit,
     onOpenMenu: () -> Unit = {}
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "refresh_rotate")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = LinearEasing)
+        ),
+        label = "rotation"
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -140,8 +166,11 @@ private fun HeaderSection(
                         .size(8.dp)
                         .clip(CircleShape)
                         .background(
-                            if (uiState.connectionStatus == ConnectionStatus.CONNECTED)
-                                GlossyColors.EmeraldMint else GlossyColors.RoseCoral
+                            when (uiState.connectionStatus) {
+                                ConnectionStatus.CONNECTED -> GlossyColors.EmeraldMint
+                                ConnectionStatus.CONNECTING -> GlossyColors.AmberWarm
+                                else -> GlossyColors.RoseCoral
+                            }
                         )
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -172,7 +201,8 @@ private fun HeaderSection(
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Refresh",
-                    tint = GlossyColors.TextPrimary
+                    tint = GlossyColors.TextPrimary,
+                    modifier = if (uiState.isRefreshing) Modifier.rotate(rotation) else Modifier
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -183,7 +213,7 @@ private fun HeaderSection(
                     .background(GlossyColors.GlassSurface)
             ) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Menu,
+                    imageVector = Icons.Default.Menu,
                     contentDescription = "Menu",
                     tint = GlossyColors.TextPrimary
                 )
@@ -193,30 +223,55 @@ private fun HeaderSection(
 }
 
 @Composable
-private fun OfflineBanner(message: String) {
+private fun OfflineBanner(message: String, onRetry: () -> Unit) {
     GlossyCard(
-        backgroundColor = GlossyColors.RoseCoral.copy(alpha = 0.15f),
-        borderColor = GlossyColors.RoseCoral.copy(alpha = 0.4f)
+        backgroundColor = GlossyColors.RoseCoral.copy(alpha = 0.12f),
+        borderColor = GlossyColors.RoseCoral.copy(alpha = 0.35f)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(GlossyColors.RoseCoral)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = "Router Disconnected",
-                    color = GlossyColors.RoseCoral,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(GlossyColors.RoseCoral)
                 )
-                Text(
-                    text = message,
-                    color = GlossyColors.TextSecondary,
-                    fontSize = 12.sp
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Router Communication Issue",
+                        color = GlossyColors.RoseCoral,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = message,
+                        color = GlossyColors.TextSecondary,
+                        fontSize = 12.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            IconButton(
+                onClick = onRetry,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(GlossyColors.RoseCoral.copy(alpha = 0.2f))
+                    .size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Retry",
+                    tint = GlossyColors.RoseCoral,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -227,32 +282,138 @@ private fun OfflineBanner(message: String) {
 private fun HardwareVitalsCard(status: RouterStatus) {
     GlossyCard {
         Column {
-            Text(
-                text = "HARDWARE VITALS",
-                color = GlossyColors.TextSecondary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(14.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularGauge(
-                    value = status.cpu.usagePercent,
-                    label = "CPU Load",
-                    subtitle = status.cpu.loadAvg
+                Text(
+                    text = "HARDWARE VITALS",
+                    color = GlossyColors.TextSecondary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
-                CircularGauge(
-                    value = status.memory.usagePercent,
-                    label = "RAM Used",
-                    subtitle = status.memory.formattedUsedMb
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(GlossyColors.GlassSurface)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = status.cpu.model.split("@").first().trim(),
+                        color = GlossyColors.TextMuted,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Three circular gauges with equal flexible weights
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    CircularGauge(
+                        value = status.cpu.usagePercent,
+                        label = "CPU Load",
+                        subtitle = if (status.cpu.temperatureC > 0) "${status.cpu.temperatureC.toInt()}°C" else "Normal",
+                        size = 80.dp
+                    )
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    CircularGauge(
+                        value = status.memory.usagePercent,
+                        label = "RAM Used",
+                        subtitle = status.memory.formattedUsedMb,
+                        size = 80.dp
+                    )
+                }
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    CircularGauge(
+                        value = status.storage.usagePercent,
+                        label = "Flash",
+                        subtitle = status.storage.formattedUsedMb,
+                        size = 80.dp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = GlossyColors.GlassBorderDark, thickness = 0.5.dp)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Vital Details Grid (2x2)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                VitalDetailTile(
+                    icon = Icons.Default.Timer,
+                    label = "System Uptime",
+                    value = status.cpu.formattedUptime,
+                    modifier = Modifier.weight(1f)
                 )
-                CircularGauge(
-                    value = status.storage.usagePercent,
-                    label = "Flash",
-                    subtitle = status.storage.formattedUsedMb
+                VitalDetailTile(
+                    icon = Icons.Default.Speed,
+                    label = "Load Average",
+                    value = status.cpu.loadAvg,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                VitalDetailTile(
+                    icon = Icons.Default.Memory,
+                    label = "CPU Cores",
+                    value = "${status.cpu.cores}C / ${status.cpu.threads}T @ ${status.cpu.frequencyMhz}MHz",
+                    modifier = Modifier.weight(1f)
+                )
+                VitalDetailTile(
+                    icon = Icons.Default.Storage,
+                    label = "Free Memory",
+                    value = "${status.memory.freeKb / 1024} MB free",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun VitalDetailTile(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(GlossyColors.GlassSurface)
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = GlossyColors.LightBlue,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = label,
+                    color = GlossyColors.TextMuted,
+                    fontSize = 10.sp
+                )
+                Text(
+                    text = value,
+                    color = GlossyColors.TextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -268,68 +429,220 @@ private fun InternetTrafficCard(uiState: RouterUiState) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "LIVE WAN TRAFFIC",
-                    color = GlossyColors.TextSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Public,
+                        contentDescription = null,
+                        tint = GlossyColors.LightBlue,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "LIVE WAN TRAFFIC",
+                        color = GlossyColors.TextSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(GlossyColors.EmeraldMint.copy(alpha = 0.15f))
+                            .border(0.5.dp, GlossyColors.EmeraldMint.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .clip(CircleShape)
+                                    .background(GlossyColors.EmeraldMint)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "LIVE",
+                                color = GlossyColors.EmeraldMint,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(GlossyColors.GlassSurface)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = uiState.status.traffic.wanIp.ifBlank { "0.0.0.0" },
+                        color = GlossyColors.EmeraldMint,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Two-column side-by-side Live Speed meters
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                SpeedMeterTile(
+                    label = "Live Download",
+                    speed = uiState.liveDownloadSpeed,
+                    icon = Icons.Default.ArrowDownward,
+                    color = GlossyColors.EmeraldMint,
+                    history = uiState.downloadSpeedHistory,
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = uiState.status.traffic.wanIp,
+                SpeedMeterTile(
+                    label = "Live Upload",
+                    speed = uiState.liveUploadSpeed,
+                    icon = Icons.Default.ArrowUpward,
                     color = GlossyColors.LightBlue,
-                    fontSize = 12.sp,
+                    history = uiState.uploadSpeedHistory,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Data transferred strip (Total Rx & Total Tx)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(GlossyColors.GlassSurface)
+                    .padding(horizontal = 12.dp, vertical = 7.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Total Rx: ",
+                            color = GlossyColors.TextMuted,
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = uiState.status.traffic.formattedRx,
+                            color = GlossyColors.TextPrimary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(12.dp)
+                            .background(GlossyColors.GlassBorderDark)
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Total Tx: ",
+                            color = GlossyColors.TextMuted,
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = uiState.status.traffic.formattedTx,
+                            color = GlossyColors.TextPrimary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            // Gateway & Protocol info row
+            if (uiState.status.network.gateway.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Gateway: ${uiState.status.network.gateway}",
+                        color = GlossyColors.TextMuted,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "DNS: ${uiState.status.network.dnsProviderName}",
+                        color = GlossyColors.TextMuted,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpeedMeterTile(
+    label: String,
+    speed: String,
+    icon: ImageVector,
+    color: Color,
+    history: List<Double>,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(GlossyColors.GlassSurface)
+            .border(0.5.dp, GlossyColors.GlassBorderDark, RoundedCornerShape(12.dp))
+            .padding(10.dp)
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(color.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = label,
+                    color = GlossyColors.TextMuted,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Download Row & Sparkline
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.ArrowDownward,
-                    contentDescription = null,
-                    tint = GlossyColors.EmeraldMint,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Download: ${uiState.liveDownloadSpeed}",
-                    color = GlossyColors.TextPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
             Spacer(modifier = Modifier.height(6.dp))
-            TrafficSparkline(
-                data = uiState.downloadSpeedHistory,
-                color = GlossyColors.EmeraldMint,
-                height = 28.dp
+            Text(
+                text = speed,
+                color = GlossyColors.TextPrimary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Upload Row & Sparkline
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.ArrowUpward,
-                    contentDescription = null,
-                    tint = GlossyColors.SkyBlue,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Upload: ${uiState.liveUploadSpeed}",
-                    color = GlossyColors.TextPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
             Spacer(modifier = Modifier.height(6.dp))
             TrafficSparkline(
-                data = uiState.uploadSpeedHistory,
-                color = GlossyColors.SkyBlue,
+                data = history,
+                color = color,
                 height = 28.dp
             )
         }

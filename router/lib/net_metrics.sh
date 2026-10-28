@@ -25,17 +25,13 @@ prefetch_wireless() {
     _if2g="phy0-ap0"; [ -d "/sys/class/net/wlan0" ] && _if2g="wlan0"
     _if5g="phy1-ap0"; [ -d "/sys/class/net/wlan1" ] && _if5g="wlan1"
     _ifguest="phy0-ap1"; [ -d "/sys/class/net/wlan0-1" ] && _ifguest="wlan0-1"
-
-    # Only dump active station tables for physical interfaces that exist (prevents driver lockups)
     if command -v iw >/dev/null 2>&1; then
         [ -d "/sys/class/net/$_if5g" ] && iw dev "$_if5g" station dump > /tmp/.cg_5g_sta 2>/dev/null
         [ -d "/sys/class/net/$_if2g" ] && iw dev "$_if2g" station dump > /tmp/.cg_2g_sta 2>/dev/null
         [ -d "/sys/class/net/$_ifguest" ] && iw dev "$_ifguest" station dump > /tmp/.cg_guest_sta 2>/dev/null
     fi
-
     [ -f /etc/archer_guard_blocked.conf ] && cat /etc/archer_guard_blocked.conf > /tmp/.cg_blocked 2>/dev/null || iptables -S FORWARD 2>/dev/null | grep "mac-source" > /tmp/.cg_blocked 2>/dev/null || true
     uci show dhcp 2>/dev/null | grep "\.mac=" > /tmp/.cg_static 2>/dev/null || true
-    [ ! -f /etc/archer_guard_clients.conf ] && touch /etc/archer_guard_clients.conf
 }
 
 read_radio_metrics() {
@@ -142,23 +138,25 @@ get_wireless_metrics() {
 }
 
 get_wan_traffic_metrics() {
-    _wan_if="wan"
-    [ ! -d "/sys/class/net/$_wan_if" ] && _wan_if="eth0"
-
-    # Match exact interface line using awk to prevent substring match collision (e.g. pppoe-wan matching wan)
-    _dev_l=$(awk -v iface="${_wan_if}:" '$1 == iface { print; exit }' /proc/net/dev 2>/dev/null)
-    [ -z "$_dev_l" ] && _dev_l=$(awk '$1 == "pppoe-wan:" { print; exit }' /proc/net/dev 2>/dev/null)
-    _rx=0; _tx=0
-    if [ -n "$_dev_l" ]; then
-        _rx=$(printf "%s" "$_dev_l" | awk '{print $2}')
-        _tx=$(printf "%s" "$_dev_l" | awk '{print $10}')
+    _wan_if=""
+    command -v ip >/dev/null 2>&1 && _wan_if=$(ip -4 route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1); exit}')
+    if [ -z "$_wan_if" ] || [ ! -d "/sys/class/net/$_wan_if" ]; then
+        for _c in pppoe-wan wan eth0 eth1; do [ -d "/sys/class/net/$_c" ] && _wan_if="$_c" && break; done
     fi
-    _rx=$(printf "%s" "$_rx" | tr -cd '0-9')
-    _tx=$(printf "%s" "$_tx" | tr -cd '0-9')
-
+    [ -z "$_wan_if" ] && _wan_if="eth0"
+    _rx=0; _tx=0
+    if [ -f "/sys/class/net/$_wan_if/statistics/rx_bytes" ]; then
+        _rx=$(cat "/sys/class/net/$_wan_if/statistics/rx_bytes" 2>/dev/null)
+        _tx=$(cat "/sys/class/net/$_wan_if/statistics/tx_bytes" 2>/dev/null)
+    elif [ -f /proc/net/dev ]; then
+        _dev_l=$(awk -v iface="${_wan_if}:" '$1 == iface { print; exit }' /proc/net/dev 2>/dev/null)
+        [ -z "$_dev_l" ] && _dev_l=$(awk '$1 ~ /^(pppoe-wan|wan|eth0):/ { print; exit }' /proc/net/dev 2>/dev/null)
+        [ -n "$_dev_l" ] && _rx=$(printf "%s" "$_dev_l" | awk '{print $2}') && _tx=$(printf "%s" "$_dev_l" | awk '{print $10}')
+    fi
+    _rx=$(printf "%s" "$_rx" | tr -cd '0-9'); _tx=$(printf "%s" "$_tx" | tr -cd '0-9')
     _wan_ip=$(ip -4 addr show dev "$_wan_if" 2>/dev/null | grep inet | awk '{print $2}' | cut -d/ -f1)
-    [ -z "$_wan_ip" ] && _wan_ip=$(ip -4 addr show dev pppoe-wan 2>/dev/null | grep inet | awk '{print $2}' | cut -d/ -f1)
-
+    [ -z "$_wan_ip" ] && [ "$_wan_if" != "pppoe-wan" ] && _wan_ip=$(ip -4 addr show dev pppoe-wan 2>/dev/null | grep inet | awk '{print $2}' | cut -d/ -f1)
+    [ -z "$_wan_ip" ] && [ "$_wan_if" != "wan" ] && _wan_ip=$(ip -4 addr show dev wan 2>/dev/null | grep inet | awk '{print $2}' | cut -d/ -f1)
     printf '"traffic":{"interface":"%s","rx_bytes":%s,"tx_bytes":%s,"wan_ip":"%s","timestamp":%d}' \
         "$_wan_if" "${_rx:-0}" "${_tx:-0}" "${_wan_ip:-0.0.0.0}" "$(date +%s)"
 }
@@ -167,25 +165,30 @@ get_connected_clients() {
     _awk_script="/usr/lib/archer_guard/clients.awk"
     [ ! -f "$_awk_script" ] && _awk_script="$(dirname "$0")/lib/clients.awk"
     [ ! -f "$_awk_script" ] && _awk_script="$(dirname "$0")/clients.awk"
-
     _s2g=$(uci get wireless.default_radio0.ssid 2>/dev/null || echo "Archer_C6_2.4G")
     _s5g=$(uci get wireless.default_radio1.ssid 2>/dev/null || echo "Archer_C6_5G")
     _sguest=$(uci get wireless.guest.ssid 2>/dev/null || uci get wireless.wifinet0.ssid 2>/dev/null || echo "ArcherC6_Guest")
-
     _lan_up=0
     for _p in lan1 lan2 lan3 lan4; do
         [ -f "/sys/class/net/$_p/operstate" ] && [ "$(cat "/sys/class/net/$_p/operstate" 2>/dev/null)" = "up" ] && _lan_up=1 && break
     done
     [ ! -d /sys/class/net/lan1 ] && [ -f /sys/class/net/eth0/operstate ] && _lan_up=1
-
     _arp_f="/proc/net/arp"; [ ! -f "$_arp_f" ] && _arp_f="/dev/null"
-    _dhcp_f="/tmp/dhcp.leases"; [ ! -f "$_dhcp_f" ] && _dhcp_f="/dev/null"
-
+    _dhcp_f="/tmp/dhcp.leases"; [ ! -f "$_dhcp_f" ] && [ -f "/var/dhcp.leases" ] && _dhcp_f="/var/dhcp.leases"
+    [ ! -f "$_dhcp_f" ] && _dhcp_f="/dev/null"
+    _sta5="/tmp/.cg_5g_sta"; [ ! -f "$_sta5" ] && _sta5="/dev/null"
+    _sta2="/tmp/.cg_2g_sta"; [ ! -f "$_sta2" ] && _sta2="/dev/null"
+    _stag="/tmp/.cg_guest_sta"; [ ! -f "$_stag" ] && _stag="/dev/null"
+    _cfg_f="/etc/archer_guard_clients.conf"; [ ! -f "$_cfg_f" ] && _cfg_f="/dev/null"
+    _blk="/tmp/.cg_blocked"; [ ! -f "$_blk" ] && _blk="/dev/null"
+    _sta="/tmp/.cg_static"; [ ! -f "$_sta" ] && _sta="/dev/null"
     if [ -f "$_awk_script" ] && command -v awk >/dev/null 2>&1; then
-        awk -v s2g="$_s2g" -v s5g="$_s5g" -v sguest="$_sguest" -v lan_up="$_lan_up" -v now="$(date +%s)" -f "$_awk_script" \
-            /tmp/.cg_5g_sta /tmp/.cg_2g_sta /tmp/.cg_guest_sta \
-            /etc/archer_guard_clients.conf /tmp/.cg_blocked /tmp/.cg_static \
-            "$_arp_f" "$_dhcp_f" 2>/dev/null
+        _clients_out=$(awk -v s2g="$_s2g" -v s5g="$_s5g" -v sguest="$_sguest" -v lan_up="$_lan_up" -v now="$(date +%s)" -f "$_awk_script" \
+            "$_sta5" "$_sta2" "$_stag" "$_cfg_f" "$_blk" "$_sta" "$_arp_f" "$_dhcp_f" 2>/dev/null)
+        case "$_clients_out" in
+            *"clients":\[*\]*) printf "%s" "$_clients_out" ;;
+            *) printf '"clients":[]' ;;
+        esac
     else
         printf '"clients":[]'
     fi

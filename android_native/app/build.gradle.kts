@@ -13,8 +13,8 @@ android {
         applicationId = "com.archerguard.mobile_app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.2.0"
+        versionCode = 5
+        versionName = "1.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -90,6 +90,8 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
 
     implementation(libs.androidx.datastore.preferences)
+
+    testImplementation("junit:junit:4.13.2")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

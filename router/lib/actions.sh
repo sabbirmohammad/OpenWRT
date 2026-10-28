@@ -24,7 +24,6 @@ execute_control() {
     _payload=""
     [ "$REQUEST_METHOD" = "POST" ] && [ -n "$CONTENT_LENGTH" ] && [ "$CONTENT_LENGTH" -gt 0 ] && read -n "$CONTENT_LENGTH" _payload
     check_auth "$_payload"
-
     _cmd=$(extract_param "command" "$_payload"); [ -z "$_cmd" ] && _cmd=$(extract_param "cmd" "$_payload")
     _target=$(extract_param "target" "$_payload"); [ -z "$_target" ] && _target=$(extract_param "mac" "$_payload")
     _val=$(extract_param "value" "$_payload"); [ -z "$_val" ] && _val=$(extract_param "val" "$_payload"); [ -z "$_val" ] && _val=$(extract_param "minutes" "$_payload")
@@ -190,7 +189,7 @@ execute_control() {
             _msg="CAKE SQM QoS updated" ;;
         "set_wireguard")
             _s="${_val:-on}"; [ "$_s" = "1" ] || [ "$_s" = "true" ] && _s="on"
-            if [ "$_s" = "on" ]; then (ifup wg0 >/dev/null 2>&1 &) else (ifdown wg0 >/dev/null 2>&1 &) fi
+            [ "$_s" = "on" ] && (ifup wg0 >/dev/null 2>&1 &) || (ifdown wg0 >/dev/null 2>&1 &)
             _msg="WireGuard tunnel set to $_s" ;;
         "set_multiwan")
             _s="${_val:-1}"; [ "$_s" = "on" ] || [ "$_s" = "true" ] && _s="1"; [ "$_s" = "off" ] || [ "$_s" = "false" ] && _s="0"
@@ -207,13 +206,8 @@ execute_control() {
             _v1=$(printf "%s" "$_d1" | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$|^auto$')
             _v2=$(printf "%s" "$_d2" | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$')
             if [ -n "$_v1" ] && [ "$_v1" != "auto" ]; then
-                uci set network.wan.peerdns='0'; uci delete network.wan.dns 2>/dev/null
-                uci add_list network.wan.dns="$_v1"; [ -n "$_v2" ] && uci add_list network.wan.dns="$_v2"
-                _msg="Custom DNS set to $_v1${_v2:+, $_v2}"
-            else
-                uci set network.wan.peerdns='1'; uci delete network.wan.dns 2>/dev/null; _msg="DNS reset to automatic ISP"
-            fi
-            # ANTI-BRICK: Verify LAN is intact before applying network configuration
+                uci set network.wan.peerdns='0'; uci delete network.wan.dns 2>/dev/null; uci add_list network.wan.dns="$_v1"; [ -n "$_v2" ] && uci add_list network.wan.dns="$_v2"; _msg="Custom DNS set to $_v1${_v2:+, $_v2}"
+            else uci set network.wan.peerdns='1'; uci delete network.wan.dns 2>/dev/null; _msg="DNS reset to automatic ISP"; fi
             uci get network.lan.ipaddr >/dev/null 2>&1 || uci revert network
             uci commit network && (/etc/init.d/network reload >/dev/null 2>&1 &) ;;
         "raw_cmd")
@@ -226,10 +220,8 @@ execute_control() {
             esac
             # WHITELIST FILTER: Allow only verified safe network and diagnostic commands
             case "$_val" in
-                ping\ *|traceroute\ *|nslookup\ *|logread*|dmesg*|uptime|free*|df*|netstat*|iwinfo*|cat\ /proc/cpuinfo|cat\ /proc/meminfo|cat\ /proc/version)
-                    ;;
-                *)
-                    send_header; printf '{"status":"error","message":"SECURITY ALERT: Command not in diagnostic allowlist","blocked":true}\n'; exit 0 ;;
+                ping\ *|traceroute\ *|nslookup\ *|logread*|dmesg*|uptime|free*|df*|netstat*|iwinfo*|cat\ /proc/*) ;;
+                *) send_header; printf '{"status":"error","message":"SECURITY ALERT: Command not in diagnostic allowlist","blocked":true}\n'; exit 0 ;;
             esac
             _output=$($_val 2>&1 | head -n 60)
             _json_out=$(printf '%s\n' "$_output" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk 'BEGIN{printf "["} NR>1{printf ","} {printf "\"%s\"", $0} END{print "]"}')

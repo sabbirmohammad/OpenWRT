@@ -6,28 +6,15 @@
 # ==============================================================================
 
 get_bandwidth_quota_metrics() {
-    _quota_gb=50
-    _reset_day=1
-    _warn_pct=80
-    _wrt_active="false"
-
+    _quota_gb=50; _reset_day=1; _warn_pct=80; _wrt_active="false"
     if command -v uci >/dev/null 2>&1; then
-        _u_q=$(uci get archer_guard.quota.total_gb 2>/dev/null)
-        [ -n "$_u_q" ] && _quota_gb="$_u_q"
-        _u_r=$(uci get archer_guard.quota.reset_day 2>/dev/null)
-        [ -n "$_u_r" ] && _reset_day="$_u_r"
-        _u_w=$(uci get archer_guard.quota.warn_pct 2>/dev/null)
-        [ -n "$_u_w" ] && _warn_pct="$_u_w"
+        _u_q=$(uci get archer_guard.quota.total_gb 2>/dev/null); [ -n "$_u_q" ] && _quota_gb="$_u_q"
+        _u_r=$(uci get archer_guard.quota.reset_day 2>/dev/null); [ -n "$_u_r" ] && _reset_day="$_u_r"
+        _u_w=$(uci get archer_guard.quota.warn_pct 2>/dev/null); [ -n "$_u_w" ] && _warn_pct="$_u_w"
     fi
-
-    # Check wrtbwmon database (/tmp/usage.db or /tmp/wrtbwmon/usage.db)
-    _db_file="/tmp/usage.db"
-    [ ! -f "$_db_file" ] && _db_file="/tmp/wrtbwmon/usage.db"
+    _db_file="/tmp/usage.db"; [ ! -f "$_db_file" ] && _db_file="/tmp/wrtbwmon/usage.db"
     [ ! -f "$_db_file" ] && _db_file="/tmp/wrtbwmon.db"
-
-    _tot_rx=0
-    _tot_tx=0
-    _clients_json="["
+    _tot_rx=0; _tot_tx=0; _clients_json="["
     _first_c=1
 
     if [ -f "$_db_file" ]; then
@@ -62,7 +49,11 @@ get_bandwidth_quota_metrics() {
             _tot_rx=254109000; _tot_tx=48920100
         fi
 
-        # Hardware station dump client accounting fallback
+        _s5="/tmp/.cg_5g_sta"; [ ! -f "$_s5" ] && _s5="/dev/null"
+        _s2="/tmp/.cg_2g_sta"; [ ! -f "$_s2" ] && _s2="/dev/null"
+        _sg="/tmp/.cg_guest_sta"; [ ! -f "$_sg" ] && _sg="/dev/null"
+        _dl="/tmp/dhcp.leases"; [ ! -f "$_dl" ] && [ -f "/var/dhcp.leases" ] && _dl="/var/dhcp.leases"
+        [ ! -f "$_dl" ] && _dl="/dev/null"
         _clients_json=$(awk '
 BEGIN { first = 1; printf "["; }
 FILENAME ~ /\.cg_/ {
@@ -81,8 +72,11 @@ END {
         first = 0;
     }
     printf "]";
-}' /tmp/.cg_5g_sta /tmp/.cg_2g_sta /tmp/.cg_guest_sta /tmp/dhcp.leases 2>/dev/null)
-        [ -z "$_clients_json" ] && _clients_json="[]"
+}' "$_s5" "$_s2" "$_sg" "$_dl" 2>/dev/null)
+        case "$_clients_json" in
+            \[*\]) ;;
+            *) _clients_json="[]" ;;
+        esac
     fi
 
     _tot_rx=${_tot_rx:-0}; _tot_tx=${_tot_tx:-0}; _total_used=$((_tot_rx + _tot_tx))

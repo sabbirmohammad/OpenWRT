@@ -121,7 +121,12 @@ class RouterApiService(
                     return@withContext Result.failure(IOException("Router returned HTTP ${response.code}"))
                 }
                 val body = response.body?.string() ?: return@withContext Result.failure(IOException("Empty response"))
-                val parsed = json.decodeFromString<RouterStatus>(body)
+                val cleanBody = if (body.contains("{") && body.contains("}")) {
+                    body.substring(body.indexOf('{'), body.lastIndexOf('}') + 1)
+                } else {
+                    body
+                }
+                val parsed = json.decodeFromString<RouterStatus>(cleanBody)
                 Result.success(parsed)
             }
         } catch (e: Exception) {
