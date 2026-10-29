@@ -135,7 +135,7 @@
 * **Goal:** Optimize performance, test all error boundaries, compile the release APK, and verify on physical hardware.
 * **Key Tasks:**
   1. Audit network timeouts, exception handling, and offline fallback states in `ApiService`.
-  2. Scaffolding complete Android build toolchain (`AndroidManifest.xml`, `network_security_config.xml`, Gradle, and `build_apk.sh`).
+  2. Scaffolding complete Android build toolchain (`AndroidManifest.xml`, `network_security_config.xml`, and Gradle).
   3. Verify router CPU usage remains under 2% during continuous 2.5-second polling (< 250 lines POSIX ash).
   4. Run comprehensive test suites across Node, OpenWrt shell, and Android unit tests (100% pass rate).
   5. Provide one-command deployment (`router/deploy.sh`) and APK build command (`cd android_native && ./gradlew assembleRelease`).

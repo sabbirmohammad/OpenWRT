@@ -207,7 +207,7 @@ Every single file and component in this repository (Kotlin, POSIX Shell, Node.js
 2. **Decomposition Over Accumulation:** When a screen or service approaches 200 lines, it must be proactively decomposed into modular, cohesive single-responsibility files (sub-widgets, separate helpers, or domain models).
 3. **Focused Modules:** Every file must have a single clear purpose:
    * Screens only handle layout assembly and high-level routing.
-   * Specific widgets (gauges, buttons, cards) reside in dedicated modular files under `lib/widgets/` or feature-specific `components/`.
+   * Specific composable widgets (gauges, buttons, cards) reside in dedicated modular files under `ui/components/` or feature-specific `widgets/` packages.
    * Data parsing, formatting, and networking reside exclusively in domain services/models.
 
 ### ♻️ Mandate 2: 100% DRY (Don't Repeat Yourself) Principle

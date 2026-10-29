@@ -126,7 +126,15 @@ class RadarTopologyEngine {
         val tierGroups = clients.groupBy { mapClientToTier(it) }
         val tierIndices = mutableMapOf<BandTier, Int>()
 
-        return clients.map { client ->
+        // 1. First pass: compute unconstrained layout (staggering & equidistant angle)
+        class ClientLayout(
+            val client: ClientInfo,
+            val tier: BandTier,
+            val unconstrainedRadius: Float,
+            val angle: Float
+        )
+
+        val layouts = clients.map { client ->
             val tier = mapClientToTier(client)
             val tierClients = tierGroups[tier] ?: emptyList()
             val tierCount = tierClients.size
@@ -151,28 +159,45 @@ class RadarTopologyEngine {
                 baseRadius + (rssiFactor - 0.5f) * spread
             }
 
-            // Dense collision avoidance (30+ devices): interleaved radial staggering
+            // Dense collision avoidance (30+ devices): dynamic multi-level radial staggering
+            val capacity = if (baseRadius > 0f) {
+                kotlin.math.floor((2.0 * PI * baseRadius) / MIN_NODE_SPACING_PX).toInt().coerceAtLeast(1)
+            } else {
+                1
+            }
+
             val isDense = clients.size >= 20 || tierCount >= 6
             val staggerOffset = if (isDense && tierCount > 1) {
-                if (tierCount % 2 != 0 && tierIndex == tierCount - 1) {
-                    0f
-                } else if (tierIndex % 2 == 0) {
-                    RADIAL_STAGGER_OFFSET_PX
+                if (tierCount <= capacity) {
+                    if (tierCount % 2 != 0 && tierIndex == tierCount - 1) {
+                        0f
+                    } else if (tierIndex % 2 == 0) {
+                        RADIAL_STAGGER_OFFSET_PX
+                    } else {
+                        -RADIAL_STAGGER_OFFSET_PX
+                    }
                 } else {
-                    -RADIAL_STAGGER_OFFSET_PX
+                    val levels = if (tierCount > 2 * capacity) 4 else 3
+                    if (levels == 4) {
+                        val offsets = listOf(-24f, -8f, 8f, 24f)
+                        offsets[tierIndex % 4]
+                    } else {
+                        val offsets = listOf(-20f, 0f, 20f)
+                        offsets[tierIndex % 3]
+                    }
                 }
             } else {
                 0f
             }
 
-            val finalRadius = if (geometry.maxRadius <= 0f) 0f else maxOf(0f, rssiModulatedRadius + staggerOffset)
+            val unconstrainedRadius = if (geometry.maxRadius <= 0f) 0f else maxOf(0f, rssiModulatedRadius + staggerOffset)
 
-            // Equidistant angular distribution within the tier
+            // Equidistant angular distribution within the tier with decoupled base angles
             val angle = if (tierCount <= 1) {
                 -PI.toFloat() / 2f // Position single device at top (12 o'clock)
             } else {
                 val tierBaseAngle = when (tier) {
-                    BandTier.WIRED_LAN -> -PI.toFloat() / 2f
+                    BandTier.WIRED_LAN -> (-PI.toFloat() / 2f) + (PI.toFloat() / 6f)
                     BandTier.BAND_5GHZ -> -PI.toFloat() / 2f
                     BandTier.BAND_2GHZ -> (-PI.toFloat() / 2f) + (PI.toFloat() / tierCount)
                     BandTier.GUEST_ISOLATED -> (-PI.toFloat() / 2f) + (PI.toFloat() / 4f)
@@ -180,6 +205,54 @@ class RadarTopologyEngine {
                 val angleStep = (2.0 * PI / tierCount).toFloat()
                 tierBaseAngle + tierIndex * angleStep
             }
+
+            ClientLayout(client, tier, unconstrainedRadius, angle)
+        }
+
+        // 2. Second pass: enforce cross-tier radial guard bands
+        val finalRadii = FloatArray(layouts.size)
+
+        if (geometry.maxRadius <= 0f) {
+            finalRadii.fill(0f)
+        } else {
+            // WIRED_LAN
+            val lanIndices = layouts.indices.filter { layouts[it].tier == BandTier.WIRED_LAN }
+            for (idx in lanIndices) {
+                finalRadii[idx] = layouts[idx].unconstrainedRadius
+            }
+            val lanMax = if (lanIndices.isNotEmpty()) lanIndices.maxOf { finalRadii[it] } else null
+
+            // BAND_5GHZ
+            val min5G = if (lanMax != null) lanMax + MIN_NODE_SPACING_PX else 0f
+            val fiveGIndices = layouts.indices.filter { layouts[it].tier == BandTier.BAND_5GHZ }
+            for (idx in fiveGIndices) {
+                finalRadii[idx] = maxOf(min5G, layouts[idx].unconstrainedRadius)
+            }
+            val fiveGMax = if (fiveGIndices.isNotEmpty()) fiveGIndices.maxOf { finalRadii[it] } else lanMax
+
+            // BAND_2GHZ
+            val min2G = if (fiveGMax != null) fiveGMax + MIN_NODE_SPACING_PX else 0f
+            val twoGIndices = layouts.indices.filter { layouts[it].tier == BandTier.BAND_2GHZ }
+            for (idx in twoGIndices) {
+                finalRadii[idx] = maxOf(min2G, layouts[idx].unconstrainedRadius)
+            }
+            val twoGMax = if (twoGIndices.isNotEmpty()) twoGIndices.maxOf { finalRadii[it] } else fiveGMax
+
+            // GUEST_ISOLATED
+            val minGuest = if (twoGMax != null) twoGMax + MIN_NODE_SPACING_PX else 0f
+            val guestIndices = layouts.indices.filter { layouts[it].tier == BandTier.GUEST_ISOLATED }
+            for (idx in guestIndices) {
+                val clamped = maxOf(minGuest, layouts[idx].unconstrainedRadius)
+                finalRadii[idx] = minOf(geometry.maxRadius, clamped)
+            }
+        }
+
+        // 3. Third pass: construct TopologyNode list in exact original order
+        return layouts.mapIndexed { index, layout ->
+            val client = layout.client
+            val tier = layout.tier
+            val finalRadius = finalRadii[index]
+            val angle = layout.angle
 
             // Coordinate conversion
             val worldX = finalRadius * cos(angle)

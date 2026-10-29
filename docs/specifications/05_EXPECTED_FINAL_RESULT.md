@@ -52,7 +52,7 @@ When the user opens **ArcherGuard C6** on their Android phone, they are greeted 
 ## 📱 Detailed Final Screen Deliverables
 
 ### Screen 1: Dashboard (`DashboardScreen`)
-* **Live Speedometer:** 60 FPS radial dial rendered via `CustomPainter` displaying instantaneous download and upload throughput with peak indicators.
+* **Live Speedometer:** 60 FPS radial dial rendered via Jetpack Compose `Canvas` displaying instantaneous download and upload throughput with peak indicators.
 * **Physical RJ45 Switch Visualizer:** Accurate 5-port Gigabit Ethernet switch representation with glowing green (1000M), amber (100M), and dark (down) link state LEDs.
 * **Hardware Vitals Ring Gauges:**
   * CPU: 2 Cores / 4 Threads MT7621DAT load percentage with 1m/5m/15m breakdown.
@@ -112,7 +112,7 @@ The final application must satisfy strict non-functional performance benchmarks:
 | **Mobile App RAM Footprint** | **< 35 MB** | Android Studio Profiler memory inspection |
 | **Router Helper Memory** | **< 300 KB** | Pure POSIX ash shell execution, zero daemon bloat |
 | **Router CPU Overhead** | **< 2%** | Continuously polling every 2.5 seconds |
-| **APK Binary Size** | **< 22 MB** | Release build with `--split-per-abi` |
+| **APK Binary Size** | **< 22 MB** | Release build via Gradle (R8 / ProGuard minified) |
 | **Cold Startup Time** | **< 600 ms** | Time to first interactive telemetry screen |
 
 ---
@@ -144,5 +144,5 @@ The final application must satisfy strict non-functional performance benchmarks:
 - [x] 60 FPS animated speedometer and 5-port RJ45 switch visualizer render smoothly.
 - [x] Client killswitch (`block_client` / `unblock_client`) verified against OpenWrt firewall.
 - [x] Seamless connection failover between Local Wi-Fi and WireGuard VPN tunnel when remote.
-- [x] Production Android build scaffold configured (`AndroidManifest.xml`, `network_security_config.xml`, Gradle, and `build_apk.sh`).
+- [x] Production Android build scaffold configured (`AndroidManifest.xml`, `network_security_config.xml`, and Gradle).
 

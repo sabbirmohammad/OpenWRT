@@ -297,9 +297,9 @@ fun SettingsSheet(
                     scope.launch {
                         isCheckingUpdate = true
                         val currentVersion = try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.2.2"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.3.1"
                         } catch (e: Exception) {
-                            "1.2.2"
+                            "1.3.1"
                         }
                         val updater = com.archerguard.openwrt.core.network.GithubUpdateService()
                         val update = updater.checkForUpdates(currentVersion = currentVersion)
