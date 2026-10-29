@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nightlight
 import androidx.compose.material.icons.filled.RestartAlt
@@ -50,6 +51,7 @@ fun GlossySidebarDrawer(
     onNavigateToSettings: () -> Unit,
     onNavigateToSecurity: () -> Unit,
     onNavigateToFirewall: () -> Unit,
+    onNavigateToNetwork: () -> Unit = {},
     onNavigateToTools: () -> Unit,
     onFlushRam: () -> Unit,
     onToggleLeds: () -> Unit,
@@ -139,6 +141,12 @@ fun GlossySidebarDrawer(
                 title = "Firewall & NAT",
                 subtitle = "nftables rules & DDoS shield",
                 onClick = onNavigateToFirewall
+            )
+            DrawerTile(
+                icon = Icons.Default.Hub,
+                title = "Network & QoS",
+                subtitle = "SQM CAKE, DNS privacy & HW offload",
+                onClick = onNavigateToNetwork
             )
             DrawerTile(
                 icon = Icons.Default.Info,

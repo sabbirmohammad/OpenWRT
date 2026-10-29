@@ -26,15 +26,15 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Devices
-import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -75,8 +75,8 @@ data class NavigationTabItem(
  * 0: Dashboard
  * 1: Devices (with dynamic connected client count badge)
  * 2: Wireless
- * 3: Security
- * 4: Tools
+ * 3: Network
+ * 4: Menu (opens Quick Action Drawer)
  */
 @Composable
 fun GlossyBottomBar(
@@ -91,8 +91,8 @@ fun GlossyBottomBar(
         NavigationTabItem("Dashboard", Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
         NavigationTabItem("Devices", Icons.Filled.Devices, Icons.Outlined.Devices, if (clientCount > 0) clientCount else null),
         NavigationTabItem("Wireless", Icons.Filled.Wifi, Icons.Outlined.Wifi),
-        NavigationTabItem("Security", Icons.Filled.Shield, Icons.Outlined.Shield),
-        NavigationTabItem("Tools", Icons.Filled.Build, Icons.Outlined.Build)
+        NavigationTabItem("Network", Icons.Filled.Hub, Icons.Outlined.Hub),
+        NavigationTabItem("Menu", Icons.Filled.Menu, Icons.Outlined.Menu)
     )
 
     // Outer container honoring navigation bars inset with centered responsive width

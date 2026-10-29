@@ -59,6 +59,7 @@ fun SecurityScreen(
     status: RouterStatus,
     viewModel: RouterViewModel,
     onNavigateToFirewall: (() -> Unit)? = null,
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showAuditSheet by remember { mutableStateOf(false) }
@@ -85,15 +86,25 @@ fun SecurityScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Security Hub",
-                color = GlossyColors.TextPrimary,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+        if (onBackClick != null) {
+            item {
+                com.archerguard.openwrt.ui.components.ArcherTopAppBar(
+                    title = "Security Hub",
+                    subtitle = "Audit score & threat mitigations",
+                    onBackClick = onBackClick
+                )
+            }
+        } else {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Security Hub",
+                    color = GlossyColors.TextPrimary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
 
         item {

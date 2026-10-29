@@ -83,6 +83,7 @@ fun ToolsScreen(
     onNavigateToNetwork: (() -> Unit)? = null,
     onOpenSettings: (() -> Unit)? = null,
     onLogout: (() -> Unit)? = null,
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -101,21 +102,31 @@ fun ToolsScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Diagnostics & Tools",
-                color = GlossyColors.TextPrimary,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.4).sp
-            )
-            Text(
-                text = "System diagnostics, telemetry & firmware utilities",
-                color = GlossyColors.TextSecondary,
-                fontSize = 12.sp
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+        if (onBackClick != null) {
+            item {
+                com.archerguard.openwrt.ui.components.ArcherTopAppBar(
+                    title = "Diagnostics & Tools",
+                    subtitle = "System diagnostics, telemetry & firmware utilities",
+                    onBackClick = onBackClick
+                )
+            }
+        } else {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Diagnostics & Tools",
+                    color = GlossyColors.TextPrimary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.4).sp
+                )
+                Text(
+                    text = "System diagnostics, telemetry & firmware utilities",
+                    color = GlossyColors.TextSecondary,
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
 
         item {
