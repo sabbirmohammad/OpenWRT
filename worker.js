@@ -184,17 +184,18 @@ export default {
       return handleApiRoute(request, env, url.pathname);
     }
 
-    // Rewrite clean URL `/admin` to `/admin.html`
-    if (url.pathname === '/admin') {
-      const adminUrl = new URL('/admin.html', request.url);
-      if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-        return env.ASSETS.fetch(new Request(adminUrl, request));
-      }
-    }
-
-    // Static Asset fallback
+    // Static Asset fallback with Cloudflare Edge Cache Optimization
     if (env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-      return env.ASSETS.fetch(request);
+      const targetReq = url.pathname === '/admin' ? new Request(new URL('/admin.html', request.url), request) : request;
+      const response = await env.ASSETS.fetch(targetReq);
+      const res = new Response(response.body, response);
+      if (url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.svg') || url.pathname.endsWith('.ico')) {
+        res.headers.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      } else if (url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '/admin') {
+        res.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+      }
+      res.headers.set('X-Content-Type-Options', 'nosniff');
+      return res;
     }
 
     return new Response('Not Found', { status: 404 });

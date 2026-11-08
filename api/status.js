@@ -23,8 +23,19 @@ import { normalizeMac } from './request.js';
 // Regular expression to validate standard MAC addresses
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
 
+// Cloudflare Worker In-Memory Edge Micro-Cache (1.2s TTL)
+// Shields Upstash Redis from burst polling while delivering sub-20ms edge responses to clients
+const edgeStatusCache = new Map();
+const EDGE_CACHE_TTL_MS = 1200;
+
+export function invalidateEdgeStatus(mac) {
+  if (mac) {
+    edgeStatusCache.delete(normalizeMac(mac));
+  }
+}
+
 export default async function handler(req, res) {
-  // Prevent caching so polling is always real-time
+  // Prevent browser-level caching so polling is always real-time
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -52,6 +63,15 @@ export default async function handler(req, res) {
   }
 
   const cleanMac = normalizeMac(targetMac);
+  const now = Date.now();
+
+  // 1. Fast Edge Memory Cache Check (Sub-20ms response time from Cloudflare edge)
+  const cached = edgeStatusCache.get(cleanMac);
+  if (cached && (now - cached.timestamp) < EDGE_CACHE_TTL_MS) {
+    res.setHeader('CF-Cache-Status', 'HIT');
+    return res.status(200).json(cached.data);
+  }
+
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -73,10 +93,13 @@ export default async function handler(req, res) {
     const record = await redis.hgetall(`request:${cleanMac}`);
 
     if (!record || Object.keys(record).length === 0) {
-      return res.status(200).json({
+      const notFoundData = {
         mac: cleanMac,
         status: 'not_found'
-      });
+      };
+      edgeStatusCache.set(cleanMac, { data: notFoundData, timestamp: now });
+      res.setHeader('CF-Cache-Status', 'MISS');
+      return res.status(200).json(notFoundData);
     }
 
     const rawStatus = String(record.status || 'pending').toLowerCase();
@@ -84,7 +107,7 @@ export default async function handler(req, res) {
       ? Number(record.duration)
       : (record.status === 'authorized' ? 0 : null);
 
-    return res.status(200).json({
+    const responseData = {
       mac: cleanMac,
       name: record.name || '',
       status: rawStatus, // 'pending', 'authorized', 'authenticated', 'terminated', 'rejected'
@@ -92,7 +115,22 @@ export default async function handler(req, res) {
       reviewedBy: record.reviewedBy || null,
       reviewedAt: record.reviewedAt || null,
       authenticatedAt: record.authenticatedAt || null
+    };
+
+    // Store in Edge Memory Cache to absorb fast-polling bursts
+    edgeStatusCache.set(cleanMac, {
+      data: responseData,
+      timestamp: now
     });
+
+    // Safety: keep cache size bounded to prevent memory bloat
+    if (edgeStatusCache.size > 300) {
+      const oldestKey = edgeStatusCache.keys().next().value;
+      edgeStatusCache.delete(oldestKey);
+    }
+
+    res.setHeader('CF-Cache-Status', 'MISS');
+    return res.status(200).json(responseData);
   } catch (error) {
     console.error('[Status Query Error]', error);
     return res.status(500).json({

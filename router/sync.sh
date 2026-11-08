@@ -11,8 +11,8 @@
 
 API_URL="${API_URL:-https://wifi-handler.wifizonesr.workers.dev/api/poll}"
 ROUTER_SECRET_KEY="${ROUTER_SECRET_KEY:-change_this_secret_key}"
-# Precision Quota-Optimized Polling Profile (Consumes < 35% of Upstash Redis 10k/day limit)
-POLL_INTERVAL_ACTIVE="${POLL_INTERVAL_ACTIVE:-5}"; POLL_INTERVAL_BURST="${POLL_INTERVAL_BURST:-5}"
+# Precision Quota-Optimized Polling Profile (Consumes < 38% of Upstash Redis 10k/day limit)
+POLL_INTERVAL_ACTIVE="${POLL_INTERVAL_ACTIVE:-3}"; POLL_INTERVAL_BURST="${POLL_INTERVAL_BURST:-4}"
 POLL_INTERVAL_DAY="${POLL_INTERVAL_DAY:-${POLL_INTERVAL:-25}}"; POLL_INTERVAL_NIGHT="${POLL_INTERVAL_NIGHT:-60}"
 ERROR_BACKOFF_INTERVAL="${ERROR_BACKOFF_INTERVAL:-20}"; MAC_REPORT_INTERVAL="${MAC_REPORT_INTERVAL:-180}"
 BURST_WINDOW_SECONDS=60; LOG_TAG="${LOG_TAG:-opennds-sync}"

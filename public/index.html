@@ -1460,8 +1460,8 @@
         }
       }, 1000);
 
-      // Start adaptive status polling (prevents burning Upstash Redis daily quota)
-      scheduleNextPoll(2500);
+      // Start lightning-fast adaptive status polling via Cloudflare Edge
+      scheduleNextPoll(1200);
     }
 
     function scheduleNextPoll(delay) {
@@ -1473,12 +1473,12 @@
         }
         await checkApprovalStatus();
         if (waitingSeconds < 600) {
-          // Adaptive interval: 3s initially, 5s after 30s, 10s after 2 mins
-          let nextDelay = 3000;
-          if (waitingSeconds > 120) {
-            nextDelay = 10000;
-          } else if (waitingSeconds > 30) {
-            nextDelay = 5000;
+          // Ultra-responsive Edge Polling: 1.5s for the first minute, 3s up to 3 mins, 6s up to 10 mins
+          let nextDelay = 1500;
+          if (waitingSeconds > 180) {
+            nextDelay = 6000;
+          } else if (waitingSeconds > 60) {
+            nextDelay = 3000;
           }
           scheduleNextPoll(nextDelay);
         }
@@ -1488,14 +1488,14 @@
     window.checkApprovalStatusNow = function() {
       checkApprovalStatus();
       waitingSeconds = 0;
-      scheduleNextPoll(3000);
+      scheduleNextPoll(1500);
     };
 
     // Resume polling when user switches back to active tab
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && currentView === 'waitingView' && waitingSeconds < 600) {
         checkApprovalStatus();
-        scheduleNextPoll(3000);
+        scheduleNextPoll(1500);
       }
     });
 

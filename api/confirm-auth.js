@@ -15,6 +15,7 @@ import { Redis } from '@upstash/redis';
 import { normalizeMac } from './request.js';
 import { timingSafeCompare } from './poll.js';
 import { sendRouterConfirmationNotice } from '../lib/telegram/router-confirm.js';
+import { invalidateEdgeStatus } from './status.js';
 
 // Regular expression to validate standard MAC addresses
 const MAC_REGEX = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
@@ -137,6 +138,7 @@ export default async function handler(req, res) {
           await redis.expire(`request:${cleanMac}`, 604800).catch(() => {});
           await redis.lrem('pending_macs', 0, cleanMac);
         }
+        invalidateEdgeStatus(cleanMac);
       }
     } catch (dbErr) {
       console.error('[Redis Confirm Auth Error]', dbErr);
