@@ -86,29 +86,50 @@ export default async function handler(req, res) {
         if (savedAlias) cleanName = savedAlias;
       }
 
-      // Save/update request state as PENDING
-      await redis.hset(`request:${cleanMac}`, {
-        name: cleanName,
-        mac: cleanMac,
-        ip: cleanIp || '',
-        status: 'PENDING',
-        requestedAt: nowIso,
-        updatedAt: nowIso
-      });
-
-      // Maintain FIFO queue of pending MACs for router sync (/api/pending-auth)
-      await redis.lrem('pending_macs', 0, cleanMac);
-      await redis.rpush('pending_macs', cleanMac);
-
-      // Append to request history (capped at 500 records)
-      await redis.lpush('request_history', JSON.stringify({
-        name: cleanName,
-        mac: cleanMac,
-        ip: cleanIp || '',
-        status: 'PENDING',
-        requestedAt: nowIso
-      }));
-      await redis.ltrim('request_history', 0, 499);
+      // Save/update request state as PENDING with pipelining & 7-day TTL
+      if (typeof redis.pipeline === 'function') {
+        const pipe = redis.pipeline();
+        pipe.hset(`request:${cleanMac}`, {
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso,
+          updatedAt: nowIso
+        });
+        pipe.expire(`request:${cleanMac}`, 604800);
+        pipe.lrem('pending_macs', 0, cleanMac);
+        pipe.rpush('pending_macs', cleanMac);
+        pipe.lpush('request_history', JSON.stringify({
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso
+        }));
+        pipe.ltrim('request_history', 0, 499);
+        await pipe.exec();
+      } else {
+        await redis.hset(`request:${cleanMac}`, {
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso,
+          updatedAt: nowIso
+        });
+        await redis.expire(`request:${cleanMac}`, 604800).catch(() => {});
+        await redis.lrem('pending_macs', 0, cleanMac);
+        await redis.rpush('pending_macs', cleanMac);
+        await redis.lpush('request_history', JSON.stringify({
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso
+        }));
+        await redis.ltrim('request_history', 0, 499);
+      }
     } catch (dbErr) {
       console.error('[Redis Database Error]', dbErr);
     }

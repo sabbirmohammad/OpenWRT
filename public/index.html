@@ -1449,12 +1449,55 @@
       elapsedTimer = setInterval(() => {
         waitingSeconds++;
         updateTimerDisplay();
+        // If client waits > 10 mins (600s), pause auto-polling to save Redis quota
+        if (waitingSeconds >= 600 && pollTimer) {
+          clearTimeout(pollTimer);
+          pollTimer = null;
+          const waitingStatus = document.getElementById('waitingStatusText');
+          if (waitingStatus) {
+            waitingStatus.innerHTML = `<span style="cursor:pointer;text-decoration:underline;" onclick="window.checkApprovalStatusNow()">${currentLang === 'bn' ? 'স্ট্যাটাস চেক করুন (ট্যাপ করুন)' : 'Check Status (Tap)'}</span>`;
+          }
+        }
       }, 1000);
 
-      // Start status polling (every 2.5s)
-      checkApprovalStatus();
-      pollTimer = setInterval(checkApprovalStatus, 2500);
+      // Start adaptive status polling (prevents burning Upstash Redis daily quota)
+      scheduleNextPoll(2500);
     }
+
+    function scheduleNextPoll(delay) {
+      if (pollTimer) clearTimeout(pollTimer);
+      pollTimer = setTimeout(async () => {
+        if (document.hidden) {
+          // Pause polling while tab is inactive/background
+          return;
+        }
+        await checkApprovalStatus();
+        if (waitingSeconds < 600) {
+          // Adaptive interval: 3s initially, 5s after 30s, 10s after 2 mins
+          let nextDelay = 3000;
+          if (waitingSeconds > 120) {
+            nextDelay = 10000;
+          } else if (waitingSeconds > 30) {
+            nextDelay = 5000;
+          }
+          scheduleNextPoll(nextDelay);
+        }
+      }, delay);
+    }
+
+    window.checkApprovalStatusNow = function() {
+      checkApprovalStatus();
+      waitingSeconds = 0;
+      scheduleNextPoll(3000);
+    };
+
+    // Resume polling when user switches back to active tab
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && currentView === 'waitingView' && waitingSeconds < 600) {
+        checkApprovalStatus();
+        scheduleNextPoll(3000);
+      }
+    });
 
     async function checkApprovalStatus() {
       if (!clientMacAddress) return;
@@ -1541,6 +1584,7 @@
         elapsedTimer = null;
       }
       if (pollTimer) {
+        clearTimeout(pollTimer);
         clearInterval(pollTimer);
         pollTimer = null;
       }

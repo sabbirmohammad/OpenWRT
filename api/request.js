@@ -108,29 +108,50 @@ export default async function handler(req, res) {
         token: redisToken
       });
 
-      // Save user access request record as a Redis Hash
-      await redis.hset(`request:${cleanMac}`, {
-        name: cleanName,
-        mac: cleanMac,
-        ip: cleanIp || '',
-        status: 'PENDING',
-        requestedAt: nowIso,
-        updatedAt: nowIso
-      });
-
-      // Maintain FIFO queue of pending MACs for router sync (/api/pending-auth)
-      await redis.lrem('pending_macs', 0, cleanMac);
-      await redis.rpush('pending_macs', cleanMac);
-
-      // Append request to chronological history list (stores last 500 requests)
-      await redis.lpush('request_history', JSON.stringify({
-        name: cleanName,
-        mac: cleanMac,
-        ip: cleanIp || '',
-        status: 'PENDING',
-        requestedAt: nowIso
-      }));
-      await redis.ltrim('request_history', 0, 499);
+      // Save user access request record as a Redis Hash with pipelining & 7-day TTL
+      if (typeof redis.pipeline === 'function') {
+        const pipe = redis.pipeline();
+        pipe.hset(`request:${cleanMac}`, {
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso,
+          updatedAt: nowIso
+        });
+        pipe.expire(`request:${cleanMac}`, 604800);
+        pipe.lrem('pending_macs', 0, cleanMac);
+        pipe.rpush('pending_macs', cleanMac);
+        pipe.lpush('request_history', JSON.stringify({
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso
+        }));
+        pipe.ltrim('request_history', 0, 499);
+        await pipe.exec();
+      } else {
+        await redis.hset(`request:${cleanMac}`, {
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso,
+          updatedAt: nowIso
+        });
+        await redis.expire(`request:${cleanMac}`, 604800).catch(() => {});
+        await redis.lrem('pending_macs', 0, cleanMac);
+        await redis.rpush('pending_macs', cleanMac);
+        await redis.lpush('request_history', JSON.stringify({
+          name: cleanName,
+          mac: cleanMac,
+          ip: cleanIp || '',
+          status: 'PENDING',
+          requestedAt: nowIso
+        }));
+        await redis.ltrim('request_history', 0, 499);
+      }
     } catch (dbErr) {
       console.error('[Redis Database Error]', dbErr);
       // Log DB error but proceed to send Telegram notification so the admin still receives it

@@ -126,8 +126,17 @@ export default async function handler(req, res) {
           updateData.disconnectedAt = nowIso;
         }
 
-        await redis.hset(`request:${cleanMac}`, updateData);
-        await redis.lrem('pending_macs', 0, cleanMac);
+        if (typeof redis.pipeline === 'function') {
+          const pipe = redis.pipeline();
+          pipe.hset(`request:${cleanMac}`, updateData);
+          pipe.expire(`request:${cleanMac}`, 604800);
+          pipe.lrem('pending_macs', 0, cleanMac);
+          await pipe.exec();
+        } else {
+          await redis.hset(`request:${cleanMac}`, updateData);
+          await redis.expire(`request:${cleanMac}`, 604800).catch(() => {});
+          await redis.lrem('pending_macs', 0, cleanMac);
+        }
       }
     } catch (dbErr) {
       console.error('[Redis Confirm Auth Error]', dbErr);

@@ -1421,10 +1421,10 @@
       executeAction('auth', modalTargetMac, isNaN(minutes) ? 60 : minutes, modalTargetName);
     });
 
-    // Auto Refresh management
+    // Auto Refresh management (15s interval to preserve Upstash Redis daily quota)
     function startAutoRefresh() {
       stopAutoRefresh();
-      refreshInterval = setInterval(fetchDashboardData, 5000);
+      refreshInterval = setInterval(fetchDashboardData, 15000);
     }
 
     function stopAutoRefresh() {
@@ -1433,6 +1433,16 @@
         refreshInterval = null;
       }
     }
+
+    // Pause polling when browser tab is inactive to completely eliminate wasted quota burn
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopAutoRefresh();
+      } else if (adminToken) {
+        fetchDashboardData();
+        startAutoRefresh();
+      }
+    });
 
     // Login Form Submission
     loginForm.addEventListener('submit', async (e) => {
